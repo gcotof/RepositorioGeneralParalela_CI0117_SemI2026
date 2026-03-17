@@ -10,8 +10,8 @@ void* helloworld(void* arg) {
 int main() {
     pthread_t thread1, thread2;
 
-    int id1 = 1;
-    int id2 = 2;
+    int id1 = 0;
+    int id2 = 1;
 
     pthread_create(&thread1, NULL, helloworld, &id1);
     pthread_create(&thread2, NULL, helloworld, &id2);
