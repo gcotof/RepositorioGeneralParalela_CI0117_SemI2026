@@ -21,3 +21,5 @@ int main() {
 
     return 0;
 }
+
+//Cosas a resolver: Investigar cómo no tener que poner un id manualmente a cada thread (Que se adapte dependiendo de la cantidad de núcleos/threads).
