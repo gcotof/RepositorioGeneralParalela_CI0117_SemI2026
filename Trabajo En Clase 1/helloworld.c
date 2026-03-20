@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h>
 
 void* helloworld(void* arg) {
     int thread_id = *(int*)arg;
@@ -8,20 +9,25 @@ void* helloworld(void* arg) {
 }
 
 int main() {
-    //Objetivo: No tener que manualmente 'quemar' el ID de cada thread. [Que sea más dinámico]
 
-    //Idea 1: Un for y que los id dependan de un número definido de threads. 
-    int numHilos = 5; 
-    pthread_t hilos[numHilos];
-    for (int i = 0; i < 5 ; i++){
+    long numHilos = sysconf(_SC_NPROCESSORS_ONLN);
+    printf("Cantidad de cores: %ld\n", numHilos);
+
+    pthread_t threads[numHilos];
+    int thread_ids[numHilos];
+
+
+    for (int i = 0; i < numHilos ; i++){
          
-        int idT = i; 
-        pthread_create(&hilos[i], NULL, helloworld, &idT);
-        pthread_join(hilos[i], NULL);
+        thread_ids[i] = i; 
+        pthread_create(&threads[i], NULL, helloworld, &thread_ids[i]);
     }
     //Esto funcionó, pero tiene el limitante que hay que definir previamente el número de hilos que se va a utilizar. 
 
-    
+
+    for (int i = 0; i < numHilos + 1; i++){
+        pthread_join(threads[i], NULL);
+    }
 
 
 
