@@ -1,3 +1,8 @@
 /.vscode
 /Trabajo En Clase 1/helloworld.dSYM
 Trabajo En Clase 1/helloworld
+.DS_Store
+TrabajoEnClase1/helloworld
+TrabajoEnClase1/helloworld.dSYM/Contents/Info.plist
+TrabajoEnClase1/helloworld.dSYM/Contents/Resources/DWARF/helloworld
+TrabajoEnClase1/helloworld.dSYM/Contents/Resources/Relocations/aarch64/helloworld.yml
