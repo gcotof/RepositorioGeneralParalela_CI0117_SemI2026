@@ -3,11 +3,12 @@
 #include <unistd.h>
 
 void* sum_funct(void* arg) {
-    for (long i = 0; i < 10000000; i++) {
+    for (long i = 0; i < 10000000000; i++) {
         (*(long*)arg)++;
     } 
 
-    printf("Suma Total: %ld \n", *(long*)arg);
+    //printf("Suma Total: %ld \n", *(long*)arg);
+    
 }
 
 int main() {
@@ -20,5 +21,7 @@ int main() {
         int idT = i;
         pthread_create(&hilos[i], NULL, sum_funct, &sum);
         pthread_join(hilos[i], NULL);
+        
     }
+    printf("Suma Total: %ld \n", sum);
 }
