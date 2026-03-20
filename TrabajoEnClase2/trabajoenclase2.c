@@ -2,13 +2,13 @@
 #include <pthread.h>
 #include <unistd.h>
 
-int sum = 0;
+long sum = 0;
 
 void* sum_funct(void* arg) {
-    for (int i = 0; i < 1000; i++) {
+    for (long i = 0; i < 10000000; i++) {
         sum++;
     }
-    printf("Suma Total: %d \n",sum);
+    printf("Suma Total: %ld \n",sum);
 }
 
 int main() {
