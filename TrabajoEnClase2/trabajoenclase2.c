@@ -2,16 +2,18 @@
 #include <pthread.h>
 #include <unistd.h>
 
+int sum = 0;
 
 void* sum_funct(void* arg) {
     for (int i = 0; i < 1000; i++) {
-        *(int*)arg++;
+        sum++;
     }
+    printf("Suma Total: %d \n",sum);
 }
 
 int main() {
     long numHilos = sysconf(_SC_NPROCESSORS_ONLN);
-    int sum = 0;
+    printf("Cantidad de cores: %ld\n", numHilos);
     pthread_t hilos[numHilos];
     for (int i = 0; i < numHilos; i++) {
         int idT = i;
