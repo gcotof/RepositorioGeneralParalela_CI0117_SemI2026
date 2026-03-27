@@ -91,9 +91,9 @@ void* philosopher(void* arg) {
     params *p = (params*)arg;
 
     while (true) {
-        think(&p->tid);
+        think(p);
         get_forks(p);
-        eat(&p->tid);
+        eat(p);
         put_forks(p);
     }
 
