@@ -1,21 +1,21 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <stdbool.h>
 
 
 typedef struct {
-    int *A; 
+    pthread_mutex_t *forks;
     int tid; 
-    int size; 
     int nthreads;
 } params;
 
 
 
 void* think(void* arg) {
-    int thread_id = *(int*)arg;
-    printf("El Filósofo %d está pensando...\n",thread_id);
+    params *p = (params*)arg;
+    printf("El Filósofo %d está pensando...\n", p->tid);
     sleep(2);
     return NULL;
 }
@@ -31,20 +31,41 @@ int right(int id, int numHilos) {
     return (id + 1) % numHilos;
 }
 
-void* get_forks(void* arg){
-    int id = *(int*)arg;
+void* get_forks(void* arg) {
+    params *p = (params*)arg;
 
-    pthread_mutex_lock(&forks[left(id)]);
-    pthread_mutex_lock(&forks[right(id, )]);
+    int id = p->tid;
+    pthread_mutex_t *forks = p->forks;
+    int n = p->nthreads;
+
+    if (id % 2 == 0) { //Esto es para evitar un deadlock, ya que si son un número par (4) no puede ocurrir un deadlock. 
+        pthread_mutex_lock(&forks[left(id)]);
+        pthread_mutex_lock(&forks[right(id, n)]);
+    } else {
+        pthread_mutex_lock(&forks[right(id, n)]);
+        pthread_mutex_lock(&forks[left(id)]);
+    }
+    return NULL;
 }
 
 void* eat(void* arg){
-
+    params *p = (params*)arg;
+    int id = p->tid;
+    printf("El Filósofo %d está comiendo...\n",id);
+    return NULL; 
 }
 
-void* put_forks(void* arg){
+void* put_forks(void* arg) {
+    params *p = (params*)arg;
+
+    int id = p->tid;
+    pthread_mutex_t *forks = p->forks;
+    int n = p->nthreads;
+
     pthread_mutex_unlock(&forks[left(id)]);
-    pthread_mutex_unlock(&forks[right]);
+    pthread_mutex_unlock(&forks[right(id, n)]);
+
+    return NULL;
 }
 
 // 1 def get_forks(i):
@@ -67,12 +88,13 @@ void* put_forks(void* arg){
 
 //Crear filósofo: 
 void* philosopher(void* arg) {
-    int id = *(int*)arg;
+    params *p = (params*)arg;
+
     while (true) {
-        think(&id);
-        get_forks(&id);
-        eat(&id);
-        put_forks(&id);
+        think(&p->tid);
+        get_forks(p);
+        eat(&p->tid);
+        put_forks(p);
     }
 
     return NULL;
@@ -98,18 +120,8 @@ int main() {
     }
 
     for (int i = 0; i < numHilos ; i++){
-        thread_ids[i] = i; 
-        pthread_create(&threads[i], NULL, philosopher, &thread_ids[i]);
-    }
-
-    for (int i = 0; i < numHilos + 1; i++){
-        pthread_join(threads[i], NULL);
-    }
-
-    for (int i = 0; i < numHilos ; i++){
-        thread_params[i].A = forks; 
-        thread_params[i].tid = thread_ids; 
-        thread_params[i].size = sizeof(pthread_mutex_t); 
+        thread_params[i].forks = forks;
+        thread_params[i].tid = i; 
         thread_params[i].nthreads = numHilos; 
 
         pthread_create(&threads[i], NULL, philosopher, (void*)&thread_params[i]);
