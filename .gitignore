@@ -6,3 +6,4 @@ TrabajoEnClase1/helloworld
 TrabajoEnClase1/helloworld.dSYM/Contents/Info.plist
 TrabajoEnClase1/helloworld.dSYM/Contents/Resources/DWARF/helloworld
 TrabajoEnClase1/helloworld.dSYM/Contents/Resources/Relocations/aarch64/helloworld.yml
+*.out
