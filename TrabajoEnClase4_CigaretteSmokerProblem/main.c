@@ -13,6 +13,16 @@ sem_t tobacco;
 sem_t paper;
 sem_t match;
 
+sem_t smokerTobacco;  // signals the smoker who has tobacco
+sem_t smokerPaper;
+sem_t smokerMatch;
+
+pthread_mutex_t mutex;
+
+bool isTobacco = false;
+bool isPaper   = false;
+bool isMatch   = false;
+
 typedef enum {
     TOBACCO = 0,
     PAPER   = 1,
@@ -80,36 +90,91 @@ void* agentC(void* arg) {
     return NULL;
 }
 
-void makeAndSmoke(Smoker* s) {
-    if (s->tobacco_avail && s->paper_avail && s->match_avail) {
-        printf("Smoking...\n");
 
-        switch (s->has) {
-            case TOBACCO:
-                s->paper_avail = false;
-                s->match_avail = false;
-                break;
-            case PAPER: 
-                s->tobacco_avail = false; 
-                s->match_avail = false; 
-                break; 
-            case MATCH: 
-                s->tobacco_avail = false; 
-                s->paper_avail = false; 
-                break;
-        }
+// Each pusher owns exactly one ingredient semaphore
+//     waits on it alone (no gap problem)
+//     acquires a mutex
+//     updates a shared boolean
+//     checks if the other needed boolean is already true
+//     if yes: signal the correct smoker, reset booleans
+//     releases mutex
+void* pusherTobacco(void* arg) {
+    while (true) {
+        sem_wait(&tobacco);              // wait for agent to put tobacco out
 
-        sem_post(&agentSem);
+        pthread_mutex_lock(&mutex);
+            if (isPaper) {               // paper already on table?
+                isPaper = false;         // take it
+                sem_post(&smokerMatch);  // match smoker needs tobacco + paper
+            } else if (isMatch) {        // match already on table?
+                isMatch = false;         // take it
+                sem_post(&smokerPaper);  // paper smoker needs tobacco + match
+            } else {
+                isTobacco = true;        // nothing else ready, mark and wait
+            }
+        pthread_mutex_unlock(&mutex);
     }
+    return NULL;
 }
 
-void* smoker(void* arg){
-    //smoker activity.
-    while (true){
+void* pusherPaper(void* arg){
+    while (true) {
+        sem_wait(&paper);              // wait for agent to put paper out
 
+        pthread_mutex_lock(&mutex);
+            if (isTobacco) {               // tobacco already on table?
+                isTobacco = false;        // take it
+                sem_post(&smokerMatch);  // match smoker needs tobacco + paper
+            } else if (isMatch) {        // match already on table?
+                isMatch = false;         // take it
+                sem_post(&smokerTobacco);  // tobacco smoker needs paper + match
+            } else {
+                isPaper = true;        // nothing else ready, mark and wait
+            }
+        pthread_mutex_unlock(&mutex);
     }
+    return NULL;
 
-    return NULL; 
+}
+void* pusherMatch(void* arg){
+    while (true) {
+        sem_wait(&match);              // wait for agent to put match out
+
+        pthread_mutex_lock(&mutex);
+            if (isTobacco) {               // tobacco already on table?
+                isTobacco = false;         // take it
+                sem_post(&smokerPaper);  // paper smoker needs tobacco + match
+            } else if (isPaper) {        // paper already on table?
+                isPaper = false;         // take it
+                sem_post(&smokerTobacco);  // tobacco smoker needs paper + match
+            } else {
+                isMatch = true;        // nothing else ready, mark and wait
+            }
+        pthread_mutex_unlock(&mutex);
+    }
+    return NULL;
+
+}
+
+
+// if pushers are doing all the ingredient checking, what does the smoker actually need to wait on? 
+// It's not the ingredient semaphores anymore. That's what simplifies it.
+void* smoker(void* arg) {
+    Smoker* s = (Smoker*) arg;
+
+    while (true) {
+        // each smoker waits on their own semaphore
+        switch (s->has) {
+            case TOBACCO: sem_wait(&smokerTobacco); break;
+            case PAPER:   sem_wait(&smokerPaper);   break;
+            case MATCH:   sem_wait(&smokerMatch);   break;
+        }
+
+        // pusher already confirmed we have everything, just smoke
+        printf("Smoker with %d is smoking\n", s->has);
+        sem_post(&agentSem);
+    }
+    return NULL;
 }
 
 int main() {
@@ -119,6 +184,18 @@ int main() {
     sem_init(&tobacco, 0, 0); // starts at 0 nothing available yet
     sem_init(&paper, 0, 0);
     sem_init(&match, 0, 0);
+
+    sem_init(&smokerTobacco, 0, 0);
+    sem_init(&smokerPaper,   0, 0);
+    sem_init(&smokerMatch,   0, 0);
+
+    pthread_t pusherThreads[3];
+
+    pthread_create(&pusherThreads[0], NULL, pusherTobacco, NULL);
+    pthread_create(&pusherThreads[1], NULL, pusherPaper,   NULL);
+    pthread_create(&pusherThreads[2], NULL, pusherMatch,   NULL);
+
+    pthread_mutex_init(&mutex, NULL);
 
     pthread_t agentThreads[3];
     pthread_t smokerThreads[3];
@@ -147,6 +224,14 @@ int main() {
     sem_destroy(&tobacco);
     sem_destroy(&paper);
     sem_destroy(&match);
+
+    sem_destroy(&smokerTobacco);
+    sem_destroy(&smokerPaper);
+    sem_destroy(&smokerMatch);
+
+    pthread_mutex_destroy(&mutex);
+
+    for (int i = 0; i < 3; i++) pthread_join(pusherThreads[i], NULL);
 
     return 0;
 }
