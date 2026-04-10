@@ -9,6 +9,7 @@ typedef struct {
     pthread_mutex_t *forks; // Array of mutexes representing forks
     int tid;                // Thread (philosopher) ID
     int nthreads;           // Total number of philosophers
+    int eat_count;
 } params;
 
 
@@ -84,16 +85,20 @@ void* put_forks(void* arg) {
 void* philosopher(void* arg) {
     params *p = (params*)arg;
 
-    while (true) {
+    while (p->eat_count < 5) {
         think(p);
         get_forks(p);
         eat(p);
+
+        p->eat_count++;
+
         put_forks(p);
     }
 
+    printf("Filósofo %d terminó de comer 5 veces.\n", p->tid);
     return NULL;
 }
-
+    
 int main() {
 
     // Number of philosophers = number of CPU cores available
@@ -115,6 +120,7 @@ int main() {
 
     // Create philosopher threads
     for (int i = 0; i < numHilos ; i++){
+        thread_params[i].eat_count = 0;
         thread_params[i].forks = forks;
         thread_params[i].tid = i; 
         thread_params[i].nthreads = numHilos; 
