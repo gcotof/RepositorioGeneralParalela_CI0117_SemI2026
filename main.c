@@ -9,6 +9,24 @@
 struct timespec global_start; // stores the exact moment when the simulation starts
 struct timespec global_end; // stores the exact moment when the last passenger was served
 
+// struct that define the passengers class
+typedef enum {
+	ECONOMY,
+	BUSINESS,
+	INTERNATIONAL,
+} PassengerClass;
+
+// struct that define the passengers attributes
+typedef struct {
+	int id; // unique identifier for each passenger
+	PassengerClass class; // Economy, Business, International
+	bool wasServed; // true = passenger was already served - false = passengers has not been served yet
+	long arrival_time; // when the passenger arrived
+	long service_start_time; // when the counter started serving the passenger
+	long service_end_time;  // when the counter end to serving the passenger
+	bool priority_bumped; // for BUsiness passengers when they will mov to International Queue
+} Passenger;
+
 int main() {
 	clock_gettime(CLOCK_MONOTONIC, &global_start); // captures the current time (the type of clock, where to store the result)
 	
