@@ -9,12 +9,6 @@
 struct timespec global_start; // stores the exact moment when the simulation starts
 struct timespec global_end; // stores the exact moment when the last passenger was served
 
-// Global definition of the three queues: 
-Queue economyQueue;
-Queue businessQueue;
-Queue internationalQueue;
-
-
 // enum that define the passengers class
 typedef enum {
 	ECONOMY,
@@ -76,6 +70,15 @@ typedef struct {
     int size;
 } Queue;
 
+// Global definition of the three queues: 
+Queue economyQueue;
+Queue businessQueue;
+Queue internationalQueue;
+
+int passengers_remaining; // Number of passengers waiting to be served
+pthread_mutex_t remaining_mutex; // mutex specifically used to protect the global variable passengers_remaining
+
+
 // QUEUE OPERATIONS
 
 // Queue Initializaer
@@ -133,7 +136,9 @@ Passenger* dequeue(Queue *q) {
 void* counter_thread(void *arg) {
     Counter *counter = (Counter*) arg;
 
-    while (true) {
+    bool endLoop = false;
+
+    while (!endLoop) {
         Queue *q = NULL;
 
         // Select correct queue
@@ -144,51 +149,61 @@ void* counter_thread(void *arg) {
         else
             q = &internationalQueue;
 
-        // Take passenger (BLOCKS if empty)
-        Passenger *p = dequeue(q);
-
-        // SERVING
-        counter->state = SERVING;
-
-        struct timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);
-        p->service_start_time = now.tv_sec * 1000 + now.tv_nsec / 1000000;
-
-        // Simulate processing (10–100 ms)
-        int sleep_time = (rand() % 91 + 10) * 1000000; // ns
-        struct timespec ts = {0, sleep_time};
-        nanosleep(&ts, NULL);
-
-        // Finish service
-        clock_gettime(CLOCK_MONOTONIC, &now);
-        p->service_end_time = now.tv_sec * 1000 + now.tv_nsec / 1000000;
-
-        p->wasServed = true;
-
-        printf("Passenger %d served at counter %d\n", p->id, counter->id);
-
-        counter->passengers_served_since_break++;
-
-        // BREAK CONDITION
-        if (counter->passengers_served_since_break >= counter->K_limit) {
-            counter->state = ON_BREAK;
-
-            printf("Counter %d going on break\n", counter->id);
-
-            // Simulate break (for now simple sleep)
-            int break_time = (rand() % 100 + 50) * 1000000;
-            struct timespec bt = {0, break_time};
-            nanosleep(&bt, NULL);
-
-            counter->passengers_served_since_break = 0;
-
-            printf("Counter %d reopened\n", counter->id);
-
-            counter->state = OPEN;
+	pthread_mutex_lock(&remaining_mutex); // protect the code section that uses the global variable repassengers_remaining
+        if (passengers_remaining < 1) { 
+                endLoop = true;
         } else {
-            counter->state = OPEN;
-        }
+		passengers_remaining--;
+	}
+        pthread_mutex_unlock(&remaining_mutex);
+
+	if (!endLoop) {
+        	// Take passenger (BLOCKS if empty)
+        	Passenger *p = dequeue(q);
+
+        	// SERVING
+        	counter->state = SERVING;
+
+        	struct timespec now;
+        	clock_gettime(CLOCK_MONOTONIC, &now);
+        	p->service_start_time = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+
+        	// Simulate processing (10–100 ms)
+        	int sleep_time = (rand() % 91 + 10) * 1000000; // ns
+        	struct timespec ts = {0, sleep_time};
+        	nanosleep(&ts, NULL);
+
+        	// Finish service
+        	clock_gettime(CLOCK_MONOTONIC, &now);
+        	p->service_end_time = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+
+        	p->wasServed = true;
+
+        	printf("Passenger %d served at counter %d\n", p->id, counter->id);
+
+        	counter->passengers_served_since_break++;
+
+        	// BREAK CONDITION
+        	if (counter->passengers_served_since_break >= counter->K_limit) {
+            		counter->state = ON_BREAK;
+
+            		printf("Counter %d going on break\n", counter->id);
+
+            		// Simulate break (for now simple sleep)
+            		int break_time = (rand() % 100 + 50) * 1000000;
+            		struct timespec bt = {0, break_time};
+            		nanosleep(&bt, NULL);
+			counter->passengers_served_since_break = 0;
+
+           		printf("Counter %d reopened\n", counter->id);
+			counter->state = OPEN;
+        	} else {
+            		counter->state = OPEN;
+        	}
+	}
+	
     }
+     
 
     return NULL;
 }
@@ -196,12 +211,16 @@ void* counter_thread(void *arg) {
 int main() {
 	clock_gettime(CLOCK_MONOTONIC, &global_start); // captures the current time (the type of clock, where to store the result)
 	
+	int N = 10; // default value -> we need to add functionality to read input from terminal
+	passengers_remaining = N;
+	pthread_mutex_init(&remaining_mutex, NULL); // inicialization of the remaining_mutext for remaining_passengers
+
     //Queue definitions: 
     queue_init(&economyQueue);
     queue_init(&businessQueue);
     queue_init(&internationalQueue);
 
-
+   
 
 	//at the end of the main...
 	clock_gettime(CLOCK_MONOTONIC, &global_end); // captures the current time when the simulation ends (type of clock, where to store the result)
