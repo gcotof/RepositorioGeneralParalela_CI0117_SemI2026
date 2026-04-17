@@ -8,7 +8,15 @@
 struct timespec global_start;
 struct timespec global_end;
 
+int N;
 int M;
+
+int Q_threshold;
+int T_max;
+
+int K_min;
+int K_max;
+
 int passengers_remaining;
 pthread_mutex_t remaining_mutex;
 

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
+#include "balancer.h"
 
 #include "simulation.h"
 #include "queue.h"
@@ -10,7 +11,21 @@
 
 
 
-int main() {
+int main(int argc, char *argv[]) {
+
+	if (argc < 7) {
+	printf("Usage: %s N M K_min K_max T_max Q\n", argv[0]);
+        exit(1);
+    }
+
+    N = atoi(argv[1]);
+    M = atoi(argv[2]);
+    K_min = atoi(argv[3]);
+    K_max = atoi(argv[4]);
+    T_max = atoi(argv[5]);
+    Q_threshold = atoi(argv[6]);
+
+
     clock_gettime(CLOCK_MONOTONIC, &global_start);
 
     int N = 10;
@@ -32,9 +47,9 @@ int main() {
     Counter *global_counters = counters;
 
     // Initialize counters
-    counters[0] = (Counter){.id=0, .type=COUNTER_ECONOMY, .state=OPEN, .passengers_served_since_break=0, .K_limit=3};
-    counters[1] = (Counter){.id=1, .type=COUNTER_BUSINESS, .state=OPEN, .passengers_served_since_break=0, .K_limit=3};
-    counters[2] = (Counter){.id=2, .type=COUNTER_INTERNATIONAL, .state=OPEN, .passengers_served_since_break=0, .K_limit=3};
+    counters[0] = (Counter){.id=0, .type=COUNTER_ECONOMY, .state=OPEN, .passengers_served_since_break=0, .K_limit = (rand() % (K_max - K_min + 1)) + K_min};
+    counters[1] = (Counter){.id=1, .type=COUNTER_BUSINESS, .state=OPEN, .passengers_served_since_break=0, .K_limit = (rand() % (K_max - K_min + 1)) + K_min};
+    counters[2] = (Counter){.id=2, .type=COUNTER_INTERNATIONAL, .state=OPEN, .passengers_served_since_break=0, .K_limit = (rand() % (K_max - K_min + 1)) + K_min};
 
 
 
@@ -53,6 +68,8 @@ int main() {
 
     pthread_join(supervisor, NULL);
 
+    pthread_join(balancer, NULL);
+    
     clock_gettime(CLOCK_MONOTONIC, &global_end);
 
     double total_time = (global_end.tv_sec - global_start.tv_sec) +
