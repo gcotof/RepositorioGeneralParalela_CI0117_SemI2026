@@ -70,34 +70,27 @@ void enqueue(Queue *q, Passenger *p) {
 // Dequeue (Consumer side)
 // Removes and returns the passenger at the FRONT of the queue
 Passenger* dequeue(Queue *q) {
-    // Lock the queue before accessing/modifying it
     pthread_mutex_lock(&q->mutex);
 
-    // WAIT until queue is not empty
-    // If empty the thread sleeps and releases mutex automatically
-    // When signaled it wakes up and re-acquires mutex
-    while (q->front == NULL) {
+    while (q->front == NULL && !simulation_done) {
         pthread_cond_wait(&q->not_empty, &q->mutex);
     }
-    // Store current front node (this is what we will remove)
-    Node *temp = q->front;
-    // Extract passenger pointer from node
-    Passenger *p = temp->passenger;
 
-    // Remove from front
+    if (q->front == NULL) {
+        pthread_mutex_unlock(&q->mutex);
+        return NULL; // signal termination
+    }
+
+    Node *temp = q->front;
+    Passenger *p = temp->passenger;
     q->front = temp->next;
 
-    // If queue becomes empty after removal, rear must also be NULL
     if (q->front == NULL)
         q->rear = NULL;
 
     q->size--;
-
-    // Free memory of the removed node (NOT the passenger itself)
     free(temp);
-    
-    // Unlock queue so other threads can access it
-    pthread_mutex_unlock(&q->mutex);
 
+    pthread_mutex_unlock(&q->mutex);
     return p;
 }

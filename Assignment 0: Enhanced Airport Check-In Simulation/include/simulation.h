@@ -8,9 +8,17 @@
 #include <pthread.h>
 #include <time.h>
 
+
+extern int passengers_remaining; // total number of passengers to be served
+extern int passengers_served;    // how many have already been processed
+extern bool simulation_done;
+extern pthread_mutex_t remaining_mutex; // protects both variables above
+
 // struct that stores a moment in time using seconds and nanoseconds
 extern struct timespec global_start; // stores the exact moment when the simulation starts
 extern struct timespec global_end;   // stores the exact moment when the last passenger was served
+
+
 
 // enum that define the passengers class
 typedef enum {

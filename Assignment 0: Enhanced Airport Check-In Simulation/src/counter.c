@@ -20,14 +20,11 @@ void* counter_thread(void *arg) {
         else
             q = &internationalQueue;
 
-        pthread_mutex_lock(&remaining_mutex); // protect shared counter of remaining passengers
-
-        if (passengers_remaining < 1) { 
+        pthread_mutex_lock(&remaining_mutex);
+        passengers_served++;
+        if (passengers_served >= passengers_remaining) {
             endLoop = true;
-        } else {
-            passengers_remaining--;
         }
-
         pthread_mutex_unlock(&remaining_mutex);
 
         if (!endLoop) {

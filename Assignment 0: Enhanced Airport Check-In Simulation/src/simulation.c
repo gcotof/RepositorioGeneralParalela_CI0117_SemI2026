@@ -9,7 +9,11 @@ struct timespec global_start;
 struct timespec global_end;
 
 int passengers_remaining;
+int passengers_served = 0;  // initially none served
+bool simulation_done = false;
 pthread_mutex_t remaining_mutex;
+
+
 
 // Function that creates all passengers at the start of simulation
 // This acts as a "producer phase" (before we make it dynamic later)
