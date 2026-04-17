@@ -17,7 +17,6 @@ int T_max;
 int K_min;
 int K_max;
 
-
 int passengers_remaining;
 pthread_mutex_t remaining_mutex;
 

@@ -19,21 +19,19 @@ void* counter_thread(void *arg) {
             q = &businessQueue;
         else
             q = &internationalQueue;
+        Passenger *p = dequeue(q); // FIRST take passenger
 
-        pthread_mutex_lock(&remaining_mutex); // protect shared counter of remaining passengers
+        pthread_mutex_lock(&remaining_mutex);
 
-        if (passengers_remaining < 1) { 
-            endLoop = true;
-        } else {
-            passengers_remaining--;
+        if (passengers_remaining <= 0) {
+            pthread_mutex_unlock(&remaining_mutex);
+            return NULL;
         }
 
+        passengers_remaining--;
+
         pthread_mutex_unlock(&remaining_mutex);
-
         if (!endLoop) {
-
-            // Take passenger (BLOCKS if empty)
-            Passenger *p = dequeue(q);
 
             // SERVING
             counter->state = SERVING;
