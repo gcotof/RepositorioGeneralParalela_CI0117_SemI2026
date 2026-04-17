@@ -5,6 +5,15 @@
 
 extern Counter *global_counters;
 
+int served_economy = 0;
+int served_business = 0;
+int served_international = 0;
+
+long total_wait_time = 0;
+long total_service_time = 0;
+
+pthread_mutex_t stats_mutex;
+
 void* supervisor_thread(void *arg) {
 
     while (1) {
