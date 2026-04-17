@@ -12,6 +12,17 @@
 extern struct timespec global_start; // stores the exact moment when the simulation starts
 extern struct timespec global_end;   // stores the exact moment when the last passenger was served
 
+
+extern int N;
+extern int M;
+
+extern int Q_threshold;
+extern int T_max;
+
+extern int K_min;
+extern int K_max;
+
+
 // enum that define the passengers class
 typedef enum {
 	ECONOMY,
