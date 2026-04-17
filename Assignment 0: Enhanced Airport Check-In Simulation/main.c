@@ -56,6 +56,9 @@ int main(int argc, char *argv[]) {
     pthread_t supervisor;
     pthread_create(&supervisor, NULL, supervisor_thread, NULL);
 
+    pthread_t balancer; 
+    pthread_create(&balancer, NULL, balancer_thread, NULL);
+
     // Create threads
     for (int i = 0; i < M; i++) {
         pthread_create(&threads[i], NULL, counter_thread, &counters[i]);
@@ -76,6 +79,14 @@ int main(int argc, char *argv[]) {
                         (global_end.tv_nsec - global_start.tv_nsec) / 1e9;
 
     printf("Total simulation time: %.3f seconds\n", total_time);
+
+    printf("\n--- FINAL STATS ---\n");
+    printf("Economy served: %d\n", served_economy);
+    printf("Business served: %d\n", served_business);
+    printf("International served: %d\n", served_international);
+
+    printf("Avg wait time: %.2f ms\n", (double)total_wait_time / N);
+    printf("Avg service time: %.2f ms\n", (double)total_service_time / N);
 
     return 0;
 }

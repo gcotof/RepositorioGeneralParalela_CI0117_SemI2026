@@ -57,6 +57,20 @@ void* counter_thread(void *arg) {
 
             counter->passengers_served_since_break++;
 
+            long wait = p->service_start_time - p->arrival_time;
+            long service = p->service_end_time - p->service_start_time;
+
+            pthread_mutex_lock(&stats_mutex);
+
+            total_wait_time += wait;
+            total_service_time += service;
+
+            if (p->class == ECONOMY) served_economy++;
+            else if (p->class == BUSINESS) served_business++;
+            else served_international++;
+
+            pthread_mutex_unlock(&stats_mutex);
+
             // BREAK CONDITION
             if (counter->passengers_served_since_break >= counter->K_limit) {
                 counter->state = ON_BREAK;

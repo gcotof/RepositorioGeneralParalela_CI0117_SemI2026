@@ -22,6 +22,14 @@ extern int T_max;
 extern int K_min;
 extern int K_max;
 
+extern int served_economy;
+extern int served_business;
+extern int served_international;
+
+extern long total_wait_time;
+extern long total_service_time;
+
+extern pthread_mutex_t stats_mutex;
 
 // enum that define the passengers class
 typedef enum {
