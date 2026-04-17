@@ -6,6 +6,9 @@
 #include "simulation.h"
 #include "queue.h"
 #include "counter.h"
+#include "supervisor.h"
+
+
 
 int main() {
     clock_gettime(CLOCK_MONOTONIC, &global_start);
@@ -22,14 +25,21 @@ int main() {
 
     create_passengers(N);
 
-    int M = 3;
+    M = 3;
     pthread_t threads[M];
     Counter counters[M];
+
+    Counter *global_counters = counters;
 
     // Initialize counters
     counters[0] = (Counter){.id=0, .type=COUNTER_ECONOMY, .state=OPEN, .passengers_served_since_break=0, .K_limit=3};
     counters[1] = (Counter){.id=1, .type=COUNTER_BUSINESS, .state=OPEN, .passengers_served_since_break=0, .K_limit=3};
     counters[2] = (Counter){.id=2, .type=COUNTER_INTERNATIONAL, .state=OPEN, .passengers_served_since_break=0, .K_limit=3};
+
+
+
+    pthread_t supervisor;
+    pthread_create(&supervisor, NULL, supervisor_thread, NULL);
 
     // Create threads
     for (int i = 0; i < M; i++) {
@@ -40,6 +50,8 @@ int main() {
     for (int i = 0; i < M; i++) {
         pthread_join(threads[i], NULL);
     }
+
+    pthread_join(supervisor, NULL);
 
     clock_gettime(CLOCK_MONOTONIC, &global_end);
 
