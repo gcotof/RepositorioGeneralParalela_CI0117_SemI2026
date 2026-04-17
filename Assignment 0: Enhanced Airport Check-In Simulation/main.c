@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
+#include "balancer.h"
 
 #include "simulation.h"
 #include "queue.h"
@@ -55,6 +56,8 @@ int main(int argc, char *argv[]) {
         pthread_join(threads[i], NULL);
     }
 
+    pthread_join(balancer, NULL);
+    
     clock_gettime(CLOCK_MONOTONIC, &global_end);
 
     double total_time = (global_end.tv_sec - global_start.tv_sec) +
