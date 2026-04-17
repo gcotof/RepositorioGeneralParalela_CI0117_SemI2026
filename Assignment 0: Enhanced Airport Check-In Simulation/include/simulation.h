@@ -57,4 +57,7 @@ typedef struct {
 extern int passengers_remaining; // Number of passengers waiting to be served
 extern pthread_mutex_t remaining_mutex; // mutex specifically used to protect passengers_remaining
 
+
+void create_passengers(int N);
+
 #endif

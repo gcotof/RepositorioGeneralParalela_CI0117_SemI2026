@@ -7,33 +7,6 @@
 #include "queue.h"
 #include "counter.h"
 
-// Function that creates all passengers at the start of simulation
-void create_passengers(int N) {
-    for (int i = 0; i < N; i++) {
-        Passenger *p = malloc(sizeof(Passenger));
-
-        p->id = i;
-        p->class = rand() % 3; // random class
-        p->wasServed = false;
-        p->priority_bumped = false;
-
-        struct timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);
-
-        // Store arrival time in milliseconds
-        p->arrival_time = now.tv_sec * 1000 + now.tv_nsec / 1000000;
-
-        // Route to correct queue
-        if (p->class == ECONOMY) {
-            enqueue(&economyQueue, p);
-        } else if (p->class == BUSINESS) {
-            enqueue(&businessQueue, p);
-        } else {
-            enqueue(&internationalQueue, p);
-        }
-    }
-}
-
 int main() {
     clock_gettime(CLOCK_MONOTONIC, &global_start);
 
