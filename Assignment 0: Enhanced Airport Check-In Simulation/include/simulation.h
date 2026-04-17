@@ -62,8 +62,10 @@ typedef struct {
 	CounterState state; // Open, Serving, On break
 	int passengers_served_since_break; // number of passengers served sin last break
 	int K_limit; // maximum passengers to serve befire going on break
+	bool needs_reopen;
 } Counter;
 
+extern int M;
 // Global synchronization variables
 extern int passengers_remaining; // Number of passengers waiting to be served
 extern pthread_mutex_t remaining_mutex; // mutex specifically used to protect passengers_remaining

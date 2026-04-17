@@ -60,6 +60,7 @@ void* counter_thread(void *arg) {
             // BREAK CONDITION
             if (counter->passengers_served_since_break >= counter->K_limit) {
                 counter->state = ON_BREAK;
+                counter->needs_reopen = true;
 
                 printf("Counter %d going on break\n", counter->id);
 
