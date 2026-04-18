@@ -19,7 +19,7 @@ double paralVersion (int i, int numsteaps, int x, int pi, int sum){
     step = 1.0/(double) num_steps;
 
     double tdata = omp_get_wtime();
-    #pragma omp parallel for reduction(+:sum)
+    #pragma omp parallel
         for(i=0; i<num_steps; i++){
             x = (i+0.5)*step; 
             sum = sum + 4.0/(1.0 + x*x);
