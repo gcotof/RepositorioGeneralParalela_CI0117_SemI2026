@@ -17,8 +17,13 @@ int T_max;
 int K_min;
 int K_max;
 
+int served_economy = 0;
+Counter *global_counters;
 int passengers_remaining;
+
+int simulation_done = 0;
 pthread_mutex_t remaining_mutex;
+
 
 // Function that creates all passengers at the start of simulation
 // This acts as a "producer phase" (before we make it dynamic later)

@@ -11,8 +11,6 @@
 // struct that stores a moment in time using seconds and nanoseconds
 extern struct timespec global_start; // stores the exact moment when the simulation starts
 extern struct timespec global_end;   // stores the exact moment when the last passenger was served
-
-
 extern int N;
 extern int M;
 
@@ -28,6 +26,8 @@ extern int served_international;
 
 extern long total_wait_time;
 extern long total_service_time;
+
+extern int simulation_done;
 
 extern pthread_mutex_t stats_mutex;
 
@@ -72,6 +72,9 @@ typedef struct {
 	int K_limit; // maximum passengers to serve befire going on break
 	bool needs_reopen;
 } Counter;
+
+extern Counter *global_counters;
+
 
 extern int M;
 // Global synchronization variables

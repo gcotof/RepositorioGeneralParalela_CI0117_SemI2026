@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
-#include "balancer.h"
 
-#include "simulation.h"
-#include "queue.h"
-#include "counter.h"
-#include "supervisor.h"
+#include "include/balancer.h"
+#include "include/simulation.h"
+#include "include/queue.h"
+#include "include/counter.h"
+#include "include/supervisor.h"
 
 
 
@@ -28,7 +28,6 @@ int main(int argc, char *argv[]) {
 
     clock_gettime(CLOCK_MONOTONIC, &global_start);
 
-    int N = 10;
     passengers_remaining = N;
 
     pthread_mutex_init(&remaining_mutex, NULL);
@@ -40,11 +39,10 @@ int main(int argc, char *argv[]) {
 
     create_passengers(N);
 
-    M = 3;
     pthread_t threads[M];
     Counter counters[M];
 
-    Counter *global_counters = counters;
+    global_counters = counters;
 
     // Initialize counters
     counters[0] = (Counter){.id=0, .type=COUNTER_ECONOMY, .state=OPEN, .passengers_served_since_break=0, .K_limit = (rand() % (K_max - K_min + 1)) + K_min};

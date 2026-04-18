@@ -2,10 +2,10 @@
 #include "simulation.h"
 #include <time.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 extern Counter *global_counters;
 
-int served_economy = 0;
 int served_business = 0;
 int served_international = 0;
 
