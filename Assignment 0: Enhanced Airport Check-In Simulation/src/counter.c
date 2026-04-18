@@ -19,7 +19,11 @@ void* counter_thread(void *arg) {
             q = &businessQueue;
         else
             q = &internationalQueue;
-        Passenger *p = dequeue(q); // FIRST take passenger
+        Passenger *p = dequeue(q);
+
+        if (p == NULL) {
+            return NULL; // exit thread cleanly
+        }
 
         pthread_mutex_lock(&remaining_mutex);
 
@@ -29,6 +33,14 @@ void* counter_thread(void *arg) {
         }
 
         passengers_remaining--;
+        if (passengers_remaining == 0) {
+            simulation_done = 1;
+
+            // Wake ALL waiting threads
+            pthread_cond_broadcast(&economyQueue.not_empty);
+            pthread_cond_broadcast(&businessQueue.not_empty);
+            pthread_cond_broadcast(&internationalQueue.not_empty);
+        }
 
         pthread_mutex_unlock(&remaining_mutex);
         if (!endLoop) {

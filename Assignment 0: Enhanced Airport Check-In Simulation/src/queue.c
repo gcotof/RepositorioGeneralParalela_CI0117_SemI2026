@@ -76,8 +76,13 @@ Passenger* dequeue(Queue *q) {
     // WAIT until queue is not empty
     // If empty the thread sleeps and releases mutex automatically
     // When signaled it wakes up and re-acquires mutex
-    while (q->front == NULL) {
+    while (q->front == NULL && !simulation_done) {
         pthread_cond_wait(&q->not_empty, &q->mutex);
+    }
+
+    if (q->front == NULL && simulation_done) {
+        pthread_mutex_unlock(&q->mutex);
+        return NULL; // signal termination
     }
     // Store current front node (this is what we will remove)
     Node *temp = q->front;
