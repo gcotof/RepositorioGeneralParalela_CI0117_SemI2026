@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <omp.h>
 
-
-
 // A simple tasking example!
 // ▶ Your task for today is:
 // ▶ Write a program that prints either ”A race car” or ”A
@@ -11,30 +9,22 @@
 // ▶ You can use an interactive session by executing the
 // salloc command
 
-void printRaceCar(){
-    printf("A race car\n");
-}
 
-void printCarRace(){
-    printf("A car race\n");
-}
-
-
-int main(){
+int main() {
+    printf("%s ", "A");
     #pragma omp parallel
     {
         #pragma omp single
         {
             #pragma omp task
-                printRaceCar();
+            printf("%s ", "car");
 
             #pragma omp task
-                printCarRace();
+            printf("%s ", "race");
+
+            #pragma omp taskwait
+            printf("\n");
         }
-
-    
     }
-
     return 0;
 }
-
