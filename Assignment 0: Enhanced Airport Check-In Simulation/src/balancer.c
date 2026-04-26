@@ -1,6 +1,7 @@
 #include "balancer.h"
 #include "queue.h"
 #include "simulation.h"
+#include <stdlib.h>
 #include <time.h>
 
 void* balancer_thread(void *arg) {
