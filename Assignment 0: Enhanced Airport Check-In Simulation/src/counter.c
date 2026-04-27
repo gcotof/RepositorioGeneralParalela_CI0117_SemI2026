@@ -10,6 +10,14 @@ void* counter_thread(void *arg) {
     bool endLoop = false;
 
     while (!endLoop) {
+
+        // If the counter is on break, it waits until its state become OPEN
+        if (counter->state == ON_BREAK) {
+            struct timespec ts = {0, 5000000}; // 5ms
+            nanosleep(&ts, NULL);
+            continue;
+        }
+
         Queue *q = NULL;
 
         // Select correct queue
@@ -89,17 +97,7 @@ void* counter_thread(void *arg) {
                 counter->needs_reopen = true;
 
                 printf("Counter %d going on break\n", counter->id);
-
-                // Simulate break (for now simple sleep)
-                int break_time = (rand() % 100 + 50) * 1000000;
-                struct timespec bt = {0, break_time};
-                nanosleep(&bt, NULL);
-
-                counter->passengers_served_since_break = 0;
-
-                printf("Counter %d reopened\n", counter->id);
-
-                counter->state = OPEN;
+                continue; // go back to the begin of the while
             } else {
                 counter->state = OPEN;
             }

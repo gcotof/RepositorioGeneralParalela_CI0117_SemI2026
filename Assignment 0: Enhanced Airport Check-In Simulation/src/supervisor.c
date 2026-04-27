@@ -15,12 +15,13 @@ long total_service_time = 0;
 pthread_mutex_t stats_mutex;
 
 void* supervisor_thread(void *arg) {
+    (void)arg;
 
     while (1) {
 
         for (int i = 0; i < M; i++) {
 
-            if (global_counters[i].needs_reopen) {
+            if (global_counters[i].needs_reopen && global_counters[i].state == ON_BREAK) {
 
                 int break_time = (rand() % 100 + 50) * 1000000;
                 struct timespec bt = {0, break_time};
@@ -28,6 +29,7 @@ void* supervisor_thread(void *arg) {
 
                 global_counters[i].needs_reopen = false;
                 global_counters[i].state = OPEN;
+                global_counters[i].passengers_served_since_break = 0;
 
                 printf("Supervisor reopened counter %d\n", global_counters[i].id);
             }
