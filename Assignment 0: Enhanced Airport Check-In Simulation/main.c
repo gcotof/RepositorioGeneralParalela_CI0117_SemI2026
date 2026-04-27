@@ -10,26 +10,27 @@
 #include "include/supervisor.h"
 
 
-
-int main(int argc, char *argv[]) {
+// argc: number of arguments <-> argv: array of strings containing the arguments
+int main(int argc, char *argv[]) { 
 
 	if (argc < 7) {
 	printf("Usage: %s N M K_min K_max T_max Q\n", argv[0]);
         exit(1);
     }
 
-    N = atoi(argv[1]);
+    // atoi -> string to int
+    N = atoi(argv[1]); 
     M = atoi(argv[2]);
     K_min = atoi(argv[3]);
     K_max = atoi(argv[4]);
     T_max = atoi(argv[5]);
     Q_threshold = atoi(argv[6]);
 
+    // GLOBAL TIMER: capture the current time
+    clock_gettime(CLOCK_MONOTONIC, &global_start); 
 
-    clock_gettime(CLOCK_MONOTONIC, &global_start);
-
+    // Global variable: threads can consult this for the number of passengers in queue, along with its corresponding mutex 
     passengers_remaining = N;
-
     pthread_mutex_init(&remaining_mutex, NULL);
 
     // Initialize queues BEFORE using them
@@ -42,15 +43,46 @@ int main(int argc, char *argv[]) {
     pthread_t threads[M];
     Counter counters[M];
 
+    // ptr to the first counter of the array
     global_counters = counters;
-
+ 
     // Initialize counters
-    counters[0] = (Counter){.id=0, .type=COUNTER_ECONOMY, .state=OPEN, .passengers_served_since_break=0, .K_limit = (rand() % (K_max - K_min + 1)) + K_min};
-    counters[1] = (Counter){.id=1, .type=COUNTER_BUSINESS, .state=OPEN, .passengers_served_since_break=0, .K_limit = (rand() % (K_max - K_min + 1)) + K_min};
-    counters[2] = (Counter){.id=2, .type=COUNTER_INTERNATIONAL, .state=OPEN, .passengers_served_since_break=0, .K_limit = (rand() % (K_max - K_min + 1)) + K_min};
+    // Division of counters to improve their distribution
+    int economy = M / 3;
+    int business = M / 3;
+    int international = M - (economy + business);
 
+    int index = 0; // Counter variable
 
+    // Economy counters
+    for (int i = 0; i < economy; i++) {
+        counters[index].id = index;
+        counters[index].type = COUNTER_ECONOMY;
+        counters[index].state = OPEN;
+        counters[index].passengers_served_since_break = 0;
+        counters[index].K_limit = (rand() % (K_max - K_min + 1)) + K_min;
+        index++;
+    }
+    // Business counters
+    for (int i = 0; i < business; i++) {
+        counters[index].id = index;
+        counters[index].type = COUNTER_BUSINESS;
+        counters[index].state = OPEN;
+        counters[index].passengers_served_since_break = 0;
+        counters[index].K_limit = (rand() % (K_max - K_min + 1)) + K_min;
+        index++;
+    }
+    // International counters
+    for (int i = 0; i < international; i++) {
+        counters[index].id = index;
+        counters[index].type = COUNTER_INTERNATIONAL;
+        counters[index].state = OPEN;
+        counters[index].passengers_served_since_break = 0;
+        counters[index].K_limit = (rand() % (K_max - K_min + 1)) + K_min;
+        index++;
+    }
 
+    // Declare threads
     pthread_t supervisor;
     pthread_create(&supervisor, NULL, supervisor_thread, NULL);
 
@@ -67,15 +99,17 @@ int main(int argc, char *argv[]) {
         pthread_join(threads[i], NULL);
     }
 
+    // Wait for supervisor and balancer
     pthread_join(supervisor, NULL);
-
     pthread_join(balancer, NULL);
     
-    clock_gettime(CLOCK_MONOTONIC, &global_end);
 
+    // Global Tiemr: capture the current time at the end of the simulation
+    clock_gettime(CLOCK_MONOTONIC, &global_end);
     double total_time = (global_end.tv_sec - global_start.tv_sec) +
                         (global_end.tv_nsec - global_start.tv_nsec) / 1e9;
 
+    // STATS
     printf("Total simulation time: %.3f seconds\n", total_time);
 
     printf("\n--- FINAL STATS ---\n");
