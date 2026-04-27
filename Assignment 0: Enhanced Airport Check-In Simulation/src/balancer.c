@@ -1,10 +1,12 @@
 #include "balancer.h"
 #include "queue.h"
 #include "simulation.h"
+#include <stdlib.h>
 #include <time.h>
 
 void* balancer_thread(void *arg) {
-
+    (void)arg;
+    
     while (1) {
 
         // ECONOMY overflow → move to international

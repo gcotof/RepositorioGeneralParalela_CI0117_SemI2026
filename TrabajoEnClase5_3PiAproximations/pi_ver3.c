@@ -31,6 +31,14 @@ double loopConstructsVersion(int num_steps){
     omp_set_num_threads(4);
 
     double start = omp_get_wtime();
+    
+    #pragma omp parallel
+    {
+        int i;
+        double x;
+        int id = omp_get_thread_num();
+        int nthreads = omp_get_num_threads();
+        printf("Hilo %d de %d activo\n", id, nthreads);
 
     #pragma omp parallel
     {
@@ -40,15 +48,12 @@ double loopConstructsVersion(int num_steps){
         int nthreads = omp_get_num_threads();
         printf("Hilo %d de %d activo\n", id, nthreads);
 
-
         #pragma omp for reduction (+:sum)
             for (i = 0; i < num_steps; i++) {
                 x = (i + 0.5) * step;
                 sum += 4.0 / (1.0 + x * x);
             }
     }
-
-
     pi = step * sum;
 
     double elapsed = omp_get_wtime() - start;
@@ -75,6 +80,7 @@ double syncConstructsVersion(int num_steps) {
         int i;
         int id = omp_get_thread_num();
         int nthreads = omp_get_num_threads();
+        printf("Hilo %d de %d activo\n", id, nthreads);
 
         printf("Hilo %d de %d activo\n", id, nthreads);
 
@@ -104,7 +110,6 @@ double syncConstructsVersion(int num_steps) {
     return elapsed;
 }
 
-
 double paralVersion (int i, int num_steps, int x, double pi, int sum){
 
     step = 1.0/(double) num_steps;
@@ -129,7 +134,7 @@ double paralVersion (int i, int num_steps, int x, double pi, int sum){
 
     tdata = omp_get_wtime()-tdata;
     printf("[PARALLEL VERSION] pi = %f in %f secs \n", pi, tdata);
-    return tdata;
+    return tdata; 
 }
 
 double serialVersion (int i, int num_steps, int x, int pi, int sum){
@@ -160,7 +165,6 @@ int main (){
 
     serialVersion(i, num_steps, x, pi, sum);
     paralVersion(i, num_steps, x, pi, sum);
-
     syncConstructsVersion(num_steps);
     loopConstructsVersion(num_steps);
   
