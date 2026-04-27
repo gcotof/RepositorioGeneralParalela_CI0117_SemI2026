@@ -40,6 +40,13 @@ double loopConstructsVersion(int num_steps){
         int nthreads = omp_get_num_threads();
         printf("Hilo %d de %d activo\n", id, nthreads);
 
+    #pragma omp parallel
+    {
+        int i;
+        double x;
+        int id = omp_get_thread_num();
+        int nthreads = omp_get_num_threads();
+        printf("Hilo %d de %d activo\n", id, nthreads);
 
         #pragma omp for reduction (+:sum)
             for (i = 0; i < num_steps; i++) {
@@ -74,6 +81,9 @@ double syncConstructsVersion(int num_steps) {
         int id = omp_get_thread_num();
         int nthreads = omp_get_num_threads();
         printf("Hilo %d de %d activo\n", id, nthreads);
+
+        printf("Hilo %d de %d activo\n", id, nthreads);
+
 
         double x;
         double local_sum = 0.0;
@@ -126,7 +136,6 @@ double paralVersion (int i, int num_steps, int x, double pi, int sum){
     printf("[PARALLEL VERSION] pi = %f in %f secs \n", pi, tdata);
     return tdata; 
 }
-
 
 double serialVersion (int i, int num_steps, int x, int pi, int sum){
 
