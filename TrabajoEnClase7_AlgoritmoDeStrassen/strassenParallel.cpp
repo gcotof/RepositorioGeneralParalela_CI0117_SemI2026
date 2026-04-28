@@ -47,11 +47,16 @@ Matrix multiplyClassic(const Matrix &A, const Matrix &B) {
     int n = A.size();
     Matrix C(n, vector<double>(n, 0));
 
-    #pragma omp parallel for collapse(2)
-    for (int i = 0; i < n; i++)
-        for (int k = 0; k < n; k++)
-            for (int j = 0; j < n; j++)
-                C[i][j] += A[i][k] * B[k][j];
+    #pragma omp parallel for if(n >= 128)
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            double sum = 0.0;
+            for (int k = 0; k < n; k++) {
+                sum += A[i][k] * B[k][j];
+            }
+            C[i][j] = sum;
+        }
+    }
 
     return C;
 }
@@ -150,7 +155,7 @@ Matrix strassen(const Matrix &A, const Matrix &B) {
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        cout << "Uso: ./strassen N\n";
+        cout << "Uso: ./parallel N\n";
         return 1;
     }
 

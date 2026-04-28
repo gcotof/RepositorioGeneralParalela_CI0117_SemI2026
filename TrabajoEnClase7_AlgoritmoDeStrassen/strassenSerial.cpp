@@ -1,13 +1,17 @@
 #include <iostream>
 #include <vector>
 #include <cstdlib>
-#include <omp.h>
+#include <chrono>
 
 using namespace std;
 
 using Matrix = vector<vector<double>>;
 
-// Crear matriz NxN
+const int BASE_CASE = 64;
+const int PARALLEL_THRESHOLD = 128; 
+
+
+// Create an NxN Matrix.
 Matrix createMatrix(int n, bool randomFill = false) {
     Matrix M(n, vector<double>(n, 0));
     if (randomFill) {
@@ -18,7 +22,7 @@ Matrix createMatrix(int n, bool randomFill = false) {
     return M;
 }
 
-// Suma de matrices
+// Matrix Addition
 Matrix add(const Matrix &A, const Matrix &B) {
     int n = A.size();
     Matrix C(n, vector<double>(n));
@@ -28,7 +32,7 @@ Matrix add(const Matrix &A, const Matrix &B) {
     return C;
 }
 
-// Resta de matrices
+// Matrix substraction.
 Matrix sub(const Matrix &A, const Matrix &B) {
     int n = A.size();
     Matrix C(n, vector<double>(n));
@@ -38,56 +42,63 @@ Matrix sub(const Matrix &A, const Matrix &B) {
     return C;
 }
 
-// Multiplicación clásica (para caso base)
+// Matrix multiplication (Classic)
 Matrix multiplyClassic(const Matrix &A, const Matrix &B) {
     int n = A.size();
     Matrix C(n, vector<double>(n, 0));
 
-    for (int i = 0; i < n; i++)
-        for (int k = 0; k < n; k++)
-            for (int j = 0; j < n; j++)
-                C[i][j] += A[i][k] * B[k][j];
+    #pragma omp parallel for if(n >= 128)
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            double sum = 0.0;
+            for (int k = 0; k < n; k++) {
+                sum += A[i][k] * B[k][j];
+            }
+            C[i][j] = sum;
+        }
+    }
 
     return C;
 }
 
-// Dividir matriz en 4 bloques
+
+// Matrix Split
 void split(const Matrix &A, Matrix &A11, Matrix &A12,
            Matrix &A21, Matrix &A22) {
     int n = A.size() / 2;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++) {
             A11[i][j] = A[i][j];
             A12[i][j] = A[i][j + n];
             A21[i][j] = A[i + n][j];
             A22[i][j] = A[i + n][j + n];
         }
-    }
 }
 
-// Unir bloques en una matriz
+
+// Matrix join function
 Matrix join(const Matrix &C11, const Matrix &C12,
             const Matrix &C21, const Matrix &C22) {
     int n = C11.size();
     Matrix C(2 * n, vector<double>(2 * n));
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++) {
             C[i][j] = C11[i][j];
             C[i][j + n] = C12[i][j];
             C[i + n][j] = C21[i][j];
             C[i + n][j + n] = C22[i][j];
         }
-    }
+
     return C;
 }
 
-// Strassen recursivo
+
+// Main Strassen Function
 Matrix strassen(const Matrix &A, const Matrix &B) {
     int n = A.size();
 
-    // Caso base (ajústalo luego para performance)
-    if (n <= 64) {
+    if (n <= BASE_CASE) {
         return multiplyClassic(A, B);
     }
 
@@ -106,16 +117,34 @@ Matrix strassen(const Matrix &A, const Matrix &B) {
     split(A, A11, A12, A21, A22);
     split(B, B11, B12, B21, B22);
 
-    // M1 ... M7
-    Matrix M1 = strassen(add(A11, A22), add(B11, B22));
-    Matrix M2 = strassen(add(A21, A22), B11);
-    Matrix M3 = strassen(A11, sub(B12, B22));
-    Matrix M4 = strassen(A22, sub(B21, B11));
-    Matrix M5 = strassen(add(A11, A12), B22);
-    Matrix M6 = strassen(sub(A21, A11), add(B11, B12));
-    Matrix M7 = strassen(sub(A12, A22), add(B21, B22));
+    Matrix M1, M2, M3, M4, M5, M6, M7;
 
-    // C11, C12, C21, C22
+    bool doParallel = (n >= PARALLEL_THRESHOLD);
+
+    #pragma omp parallel sections if(doParallel)
+    {
+        #pragma omp section
+        { M1 = strassen(add(A11, A22), add(B11, B22)); }
+
+        #pragma omp section
+        { M2 = strassen(add(A21, A22), B11); }
+
+        #pragma omp section
+        { M3 = strassen(A11, sub(B12, B22)); }
+
+        #pragma omp section
+        { M4 = strassen(A22, sub(B21, B11)); }
+
+        #pragma omp section
+        { M5 = strassen(add(A11, A12), B22); }
+
+        #pragma omp section
+        { M6 = strassen(sub(A21, A11), add(B11, B12)); }
+
+        #pragma omp section
+        { M7 = strassen(sub(A12, A22), add(B21, B22)); }
+    }
+
     Matrix C11 = add(sub(add(M1, M4), M5), M7);
     Matrix C12 = add(M3, M5);
     Matrix C21 = add(M2, M4);
@@ -124,7 +153,6 @@ Matrix strassen(const Matrix &A, const Matrix &B) {
     return join(C11, C12, C21, C22);
 }
 
-// MAIN
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         cout << "Uso: ./strassen N\n";
@@ -135,11 +163,12 @@ int main(int argc, char *argv[]) {
 
     Matrix A = createMatrix(N, true);
     Matrix B = createMatrix(N, true);
-  
-    double start = omp_get_wtime();
-    Matrix C = strassen(A, B);
-    double end = omp_get_wtime();
 
-    cout << "Tiempo: " << (end - start) << " segundos\n";
+    auto start = chrono::high_resolution_clock::now();
+    Matrix C = strassen(A, B);
+    auto end = chrono::high_resolution_clock::now();
+
+    chrono::duration<double> diff = end - start;
+    cout << "Tiempos: " << diff.count() << " segundos\n";
     return 0;
 }
