@@ -20,7 +20,17 @@
     }
 
     sortColumns(A, M) {
-        
+        for (c = 1 to M) // para recorrer c/u de las columnas de la matriz
+            Llamar a un algoritmo de ordenamiento, para el cuál se le comparten los
+            siguientes parámetros:
+                1) A = la matriz.
+                2) c = la columna que se desea ordenar.
+                3) M = el largo de la fila.
+            
+            // NOTA: Dentro del algoritmo de ordenamiento seleccionado, el indice de la fila
+                     es el que AUMENTA para recorrer c/u de las filas de la columna respectiva.
+                     De forma que, al acceder un elemento: A[indice de la fila][c] recordando
+                     que c se le pasa por parámetro
     }
 */
 
