@@ -1,50 +1,51 @@
-#include "solver.hpp"
+#include "solver.h"
 
 /*
  * Function: stencil_step
- * Performs ONE iteration of a 3D stencil using the 6-neighbor rule.
+ * Performs a single iteration of a 3D stencil computation using
+ * a 6-neighbor averaging scheme.
  *
  * Description:
  *   For each interior cell (i, j, k), we compute its new value
  *   as the average of its 6 direct neighbors in the input grid.
  *
- *   The neighbors considered are:
- *     - (i+1, j, k) and (i-1, j, k)   → x-axis
- *     - (i, j+1, k) and (i, j-1, k)   → y-axis
- *     - (i, j, k+1) and (i, j, k-1)   → z-axis
- *
- *   This is a typical operation in numerical simulations such as:
- *     - heat diffusion
- *     - Laplace equation solvers
+ *   Neighbors considered:
+ *     - (i+1, j, k) and (i-1, j, k) → x-axis
+ *     - (i, j+1, k) and (i, j-1, k) → y-axis
+ *     - (i, j, k+1) and (i, j, k-1) → z-axis
  *
  * Parameters:
- *   old  - reference to the input grid (read-only)
- *   next - reference to the output grid (results written here)
+ *   old_grid - input grid (read-only)
+ *   new_grid - output grid (results written here)
  *
  * Important:
  *   - Only INTERIOR cells are updated.
- *   - Boundary cells (edges of the cube) are NOT modified.
- *   - Both grids must have the same size.
+ *   - Boundary cells (i = 0 or N-1, etc.) are NOT modified.
+ *   - Both grids must have the same size (N).
+ *
+ * Performance note:
+ *   - Uses contiguous memory access via Grid::get/set
+ *   - No bounds checking for speed (assumes valid indices)
  */
-void stencil_step(const Grid& old, Grid& next) {
-    int N = old.N;  // Size of the grid (N x N x N)
+void stencil_step(const Grid& old_grid, Grid& new_grid) {
+    const int N = old_grid.N;  // Grid dimension
 
-    // Iterate over interior cells only (skip boundaries at 0 and N-1)
+    // Iterate over interior cells only (skip boundaries)
     for (int i = 1; i < N - 1; i++) {
         for (int j = 1; j < N - 1; j++) {
             for (int k = 1; k < N - 1; k++) {
 
-                // Compute the sum of the 6 neighboring cells
+                // Compute sum of the 6 direct neighbors
                 double sum =
-                    old.get(i + 1, j,     k    ) +  // neighbor in +x direction
-                    old.get(i - 1, j,     k    ) +  // neighbor in -x direction
-                    old.get(i,     j + 1, k    ) +  // neighbor in +y direction
-                    old.get(i,     j - 1, k    ) +  // neighbor in -y direction
-                    old.get(i,     j,     k + 1) +  // neighbor in +z direction
-                    old.get(i,     j,     k - 1);   // neighbor in -z direction
+                    old_grid.get(i+1, j,   k  ) +  // +x direction
+                    old_grid.get(i-1, j,   k  ) +  // -x direction
+                    old_grid.get(i,   j+1, k  ) +  // +y direction
+                    old_grid.get(i,   j-1, k  ) +  // -y direction
+                    old_grid.get(i,   j,   k+1) +  // +z direction
+                    old_grid.get(i,   j,   k-1);   // -z direction
 
                 // Store the average in the output grid
-                next.set(i, j, k, sum / 6.0);
+                new_grid.set(i, j, k, sum / 6.0);
             }
         }
     }
@@ -56,42 +57,59 @@ void stencil_step(const Grid& old, Grid& next) {
  * Runs multiple stencil iterations using a double-buffering strategy.
  *
  * Concept:
- *   We use two grids:
- *     - 'old'  → current state (input)
- *     - 'next' → next state (output)
+ *   Instead of copying the entire grid after each iteration (O(N^3)),
+ *   we alternate ("ping-pong") between two grids:
  *
- *   After each iteration, we SWAP their roles instead of copying data.
+ *     cur -> current input grid
+ *     nxt -> output grid
  *
- * Why swap instead of copy?
- *   - Copying a 3D grid costs O(N^3)
- *   - Swapping pointers costs O(1)
- *   → This is a major performance optimization
+ *   After each iteration:
+ *     swap(cur, nxt)
+ *
+ *   This makes each iteration efficient (O(1) swap instead of O(N^3) copy).
  *
  * Parameters:
- *   old   - reference to pointer to the current grid
- *   next  - reference to pointer to the auxiliary grid
- *   steps - number of iterations to perform
+ *   old_grid - grid that initially contains the data
+ *   new_grid - auxiliary grid used for intermediate results
+ *   steps    - number of stencil iterations to perform
  *
- * Behavior:
- *   - Calls stencil_step() 'steps' times
- *   - Swaps the grids after each iteration
- *   - After completion, 'old' points to the final result
+ * Implementation detail:
+ *   - We use pointers (cur, nxt) to avoid modifying references directly.
+ *   - std::swap swaps the pointers, NOT the data.
  *
- * Note:
- *   Grid*& allows us to modify the caller's pointers directly
- *   (cleaner than using Grid** in C++).
+ * Post-condition:
+ *   - If steps is EVEN -> final result is already in old_grid
+ *   - If steps is ODD  -> final result is in new_grid
+ *
+ *   To ensure consistency, we copy the result back into old_grid
+ *   when the number of steps is odd.
  */
-void solve_sequential(Grid*& old, Grid*& next, int steps) {
+void solve_sequential(Grid& old_grid, Grid& new_grid, int steps) {
+
+    // Pointers used for swapping roles without copying data
+    Grid* cur = &old_grid;
+    Grid* nxt = &new_grid;
+
+    // Perform the requested number of iterations
     for (int s = 0; s < steps; s++) {
 
-        // Compute next iteration based on current grid
-        stencil_step(*old, *next);
+        // Compute next state from current state
+        stencil_step(*cur, *nxt);
 
-        // Swap the roles of the grids (no data is copied)
-        Grid* temp = old;
-        old = next;
-        next = temp;
+        // Swap roles: next becomes current, and vice versa
+        std::swap(cur, nxt);
     }
 
-    // At this point, 'old' contains the final result
+    /*
+     * After the loop:
+     *   - If steps is even:  cur == &old_grid
+     *   - If steps is odd:   cur == &new_grid
+     *
+     * We enforce that the final result is always in old_grid
+     * for a predictable API.
+     */
+    if (steps % 2 != 0) {
+        // Swap internal data buffers (O(1), no full copy)
+        old_grid.swap_data(new_grid);
+    }
 }
