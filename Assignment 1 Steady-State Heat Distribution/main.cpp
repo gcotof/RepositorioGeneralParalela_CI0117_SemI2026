@@ -2,6 +2,7 @@
 #include <string>
 #include "parallel.h"
 #include "solver.h"
+#include "timer.h"
 using namespace std;
 
 bool parse_args(int argc, char* argv[], int &N, int &steps, int &threads) {
@@ -29,11 +30,25 @@ int main(int argc, char* argv[]){
     if (parse_args(argc, argv, N, steps, threads)) { // si los arg dados son válidos
         Grid old_grid(N);
         Grid new_grid(N);
+
         old_grid.initialize_boundaries();
         old_grid.initialize_interior();
-        
+
+        double t1Sequential = now();
         solve_sequential(old_grid, new_grid, steps);
+        double t2Sequential = now();
+        cout << "The sequential execution time is: " << t2Sequential - t1Sequential << "s" << endl;
+
+        // reiniciar grids 
+        old_grid.initialize_boundaries();
+        old_grid.initialize_interior();
+        double t1Parallel = now();
         solve_parallel(old_grid, new_grid, steps, threads);
+        double t2Parallel = now();
+        cout << "The parallel execution time is: " << t2Parallel - t1Parallel << "s" << endl;
+
+
+        // placeholder: write_vtk
 
 
     }
