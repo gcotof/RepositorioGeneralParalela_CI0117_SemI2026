@@ -48,7 +48,7 @@ int main(int argc, char* argv[]){
 
         cout << "Speedup: " << (t1Sequential - t2Sequential) / (t2Parallel - t1Parallel) << "s" << endl; 
 
-        // placeholder: write_vtk
+        //write_vtk(old_grid, "archivo.vtk");
 
 
     }
