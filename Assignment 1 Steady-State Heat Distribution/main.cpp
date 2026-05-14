@@ -1,9 +1,7 @@
-#include <iostream>
-#include <string>
 #include "parallel.h"
 #include "solver.h"
 #include "timer.h"
-using namespace std;
+#include "output.h"
 
 bool parse_args(int argc, char* argv[], int &N, int &steps, int &threads) {
     bool areValidArgs = false;
