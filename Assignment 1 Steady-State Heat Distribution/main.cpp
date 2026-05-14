@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
+#include "parallel.h"
+#include "solver.h"
 using namespace std;
-
-
 
 bool parse_args(int argc, char* argv[], int &N, int &steps, int &threads) {
     bool areValidArgs = false;
@@ -27,6 +27,14 @@ bool parse_args(int argc, char* argv[], int &N, int &steps, int &threads) {
 int main(int argc, char* argv[]){
     int N = 0, steps = 0, threads = 0;
     if (parse_args(argc, argv, N, steps, threads)) { // si los arg dados son válidos
+        Grid old_grid(N);
+        Grid new_grid(N);
+        old_grid.initialize_boundaries();
+        old_grid.initialize_interior();
+        
+        solve_sequential(old_grid, new_grid, steps);
+        solve_parallel(old_grid, new_grid, steps, threads);
+
 
     }
     return 0; 
