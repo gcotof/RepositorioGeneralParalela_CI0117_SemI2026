@@ -10,7 +10,7 @@ bool parse_args(int argc, char* argv[], int &N, int &steps, int &threads) {
     if (argc == 4) {
         N = stoi(argv[1]);
         steps = stoi(argv[2]);
-        threads = stoi(argv[3]);
+        threads =  stoi(argv[3]);
         if (N <= 0 || steps <= 0 || threads <= 0) 
             cout << "N, steps and threads must be >= 1" << endl;
         else 
@@ -42,11 +42,13 @@ int main(int argc, char* argv[]){
         // reiniciar grids 
         old_grid.initialize_boundaries();
         old_grid.initialize_interior();
+        new_grid = Grid(N);
         double t1Parallel = now();
         solve_parallel(old_grid, new_grid, steps, threads);
         double t2Parallel = now();
         cout << "The parallel execution time is: " << t2Parallel - t1Parallel << "s" << endl;
 
+        cout << "Speedup: " << (t1Sequential - t2Sequential) / (t2Parallel - t1Parallel) << "s" << endl; 
 
         // placeholder: write_vtk
 
