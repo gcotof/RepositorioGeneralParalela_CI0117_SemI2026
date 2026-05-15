@@ -121,13 +121,13 @@ void shearSort(int** A, int M) {
     int stages = logBase2(N);   // number of stages
 
     for (int stage = 0; stage < stages; stage++) {
-        sortRowsAlternateDirection(A, M);   // 1) ordenar filas alternando
-        sortColumns(A, M);                  // 2) ordenar columnas creciente
+        sortRowsAlternateDirection(A, M);   // 1) order rows altering direction
+        sortColumns(A, M);                  // 2) order columns in ascending order
     }
 }
 
 // -------------------------------------------------------
-// Utilities: crear / leer / imprimir / liberar matriz
+// Utilities: create / read / print / free up matrix
 // -------------------------------------------------------
 
 int** createMatrix(int M) {
