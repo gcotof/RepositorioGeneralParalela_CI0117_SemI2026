@@ -80,11 +80,39 @@ void sortRowsAlternateDirection(int** A, int M) {
     }
 }
 
+// -------------------------------------------------------
+// Shear Sort: funciones principales SECUENCIALES
+// -------------------------------------------------------
+
+/**
+ * Sorts all rows alternating direction:
+ *   - Even rows  (0, 2, 4, …): ascending  (left → right)
+ *   - Odd rows (1, 3, 5, …): descending (right → left)
+ */
+void sortRowsAlternateDirectionSequential(int** A, int M) {
+    for (int f = 0; f < M; f++) {
+        if (f % 2 == 0) {
+            sortRowAscending(A, f, M);   // even row  -> ascending
+        } else {
+            sortRowDescending(A, f, M);  // odd row -> descending
+        }
+    }
+}
+
 /**
  * Sorts all columns in ascending order.
  */
 void sortColumns(int** A, int M) {
     #pragma omp parallel for schedule(dynamic)
+    for (int c = 0; c < M; c++) {
+        sortColumnAscending(A, c, M);
+    }
+}
+
+/**
+ * Sorts all columns in ascending order (SEQUENTIAL).
+ */
+void sortColumnsSequential(int** A, int M) {
     for (int c = 0; c < M; c++) {
         sortColumnAscending(A, c, M);
     }
@@ -127,6 +155,24 @@ void shearSort(int** A, int M) {
 }
 
 // -------------------------------------------------------
+// Shear Sort SECUENCIAL completo
+// -------------------------------------------------------
+
+/**
+ * Executes the Shear Sort algorithm on the matrix A of size M×M.
+ * Iterates log2(N) times, where N = M*M.
+ */
+void shearSortSequential(int** A, int M) {
+    int N      = M * M;
+    int stages = logBase2(N);   // number of stages
+
+    for (int stage = 0; stage < stages; stage++) {
+        sortRowsAlternateDirectionSequential(A, M);   // 1) order rows altering direction
+        sortColumnsSequential(A, M);                  // 2) order columns in ascending order
+    }
+}
+
+// -------------------------------------------------------
 // Utilities: create / read / print / free up matrix
 // -------------------------------------------------------
 
@@ -153,36 +199,77 @@ bool readFromFile(int** A, int M, const char* filename) {
     return true;
 }
 
+/**
+ * Timer 
+ */
+inline double now() {
+    return omp_get_wtime();
+}
+
 int main() {
-    int M = 4;
+    int M = 100;
 
     int** A = createMatrix(M);
 
     fillRandom(A, M);
 
-    std::cout << "Original matrix:\n";
+    int** copy = createMatrix(M);
+
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < M; j++) {
+            copy[i][j] = A[i][j];
+        }
+    }
+
+    /*std::cout << "Original matrix:\n";
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < M; j++) {
             std::cout << A[i][j] << "\t";
         }
         std::cout << "\n";
-    }
+    }*/
 
-    shearSort(A, M);
+    // SEQUENTIAL EXECUTION
+    std::cout << "\n======== SEQUENTIAL EXECUTION ========\n";
+    double t1Sequential = now();
+    shearSortSequential(A, M);
+    double t2Sequential = now();
+    std::cout << "The sequential execution time is: " << t2Sequential - t1Sequential << "s" << std::endl;
 
-    std::cout << "\nSorted matrix:\n";
+    /*std::cout << "\nSorted matrix:\n";
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < M; j++) {
             std::cout << A[i][j] << "\t";
         }
         std::cout << "\n";
-    }
+    }*/
+
+    // PARALLEL EXECUTION
+    std::cout << "\n======== PARALLEL EXECUTION ========\n";
+    double t1Parallel = now();
+    shearSort(copy, M);
+    double t2Parallel = now();
+    std::cout << "The parallel execution time is: " << t2Parallel - t1Parallel << "s" << std::endl;
+
+    /*std::cout << "\nSorted matrix:\n";
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < M; j++) {
+            std::cout << copy[i][j] << "\t";
+        }
+        std::cout << "\n";
+    }*/
+
+    double speedUp = (t2Sequential - t1Sequential) / (t2Parallel - t1Parallel) ;
+    std::cout << "Speedup: " << speedUp << "x" << std::endl; 
+
 
     // Freeing up memory
     for (int i = 0; i < M; i++) {
         delete[] A[i];
+        delete[] copy[i];
     }
     delete[] A;
+    delete[] copy;
 
     return 0;
 }
