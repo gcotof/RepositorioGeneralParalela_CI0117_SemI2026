@@ -73,9 +73,9 @@ void sortRowsAlternateDirection(int** A, int M) {
     #pragma omp parallel for schedule(dynamic)
     for (int f = 0; f < M; f++) {
         if (f % 2 == 0) {
-            sortRowAscending(A, f, M);   // fila par  → creciente
+            sortRowAscending(A, f, M);   // even row  -> ascending
         } else {
-            sortRowDescending(A, f, M);  // fila impar → decreciente
+            sortRowDescending(A, f, M);  // odd row -> descending
         }
     }
 }
@@ -151,4 +151,38 @@ bool readFromFile(int** A, int M, const char* filename) {
         for (int j = 0; j < M; j++)
             f >> A[i][j];
     return true;
+}
+
+int main() {
+    int M = 4;
+
+    int** A = createMatrix(M);
+
+    fillRandom(A, M);
+
+    std::cout << "Original matrix:\n";
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < M; j++) {
+            std::cout << A[i][j] << "\t";
+        }
+        std::cout << "\n";
+    }
+
+    shearSort(A, M);
+
+    std::cout << "\nSorted matrix:\n";
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < M; j++) {
+            std::cout << A[i][j] << "\t";
+        }
+        std::cout << "\n";
+    }
+
+    // Freeing up memory
+    for (int i = 0; i < M; i++) {
+        delete[] A[i];
+    }
+    delete[] A;
+
+    return 0;
 }
