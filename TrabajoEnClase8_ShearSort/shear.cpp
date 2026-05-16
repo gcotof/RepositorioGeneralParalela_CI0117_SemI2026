@@ -207,37 +207,52 @@ inline double now() {
     return omp_get_wtime();
 }
 
-bool parseAgs(int argc, char* argv[], int &M, int** A) {
+bool parseAgs(int argc, char* argv[], int &M, int** &A) {  
     bool areValidArgs = false;
     if (argc == 2 || argc == 3) {
         M = std::stoi(argv[1]);
-        A = createMatrix(M);
-        if (argc == 2)
-            fillRandom(A, M);
-        else 
-            readFromFile(A, M, argv[2]);
-        if (M <= 0) 
-            std::cout << "M must be >= 1" << std::endl;
-        else 
-            areValidArgs = true;
+        if (argc == 3) {
+            std::string arg = argv[2]; 
+            if (M <= 0 || (arg == "fileA.txt" && M > 100) || (arg == "fileB.txt" && M > 200))
+                std::cout << "M must be >= 1 and (M <= 100 if file is fileA.txt or <= 200 if file is fileB.txt)" << std::endl;
+            else {
+                A = createMatrix(M);
+                if (!readFromFile(A, M, arg.c_str()))
+                    areValidArgs = false;
+                else
+                    areValidArgs = true;
+            }
+        } else {
+            if (M <= 0)
+                std::cout << "M must be >= 1" << std::endl;
+            else {
+                A = createMatrix(M);
+                fillRandom(A, M);
+                areValidArgs = true;
+            }
+        }
     } else 
-        std::cout << "The number of arguments is invalid! You should enter: 1) ./shear N or 2) ./shear N fileA/B" << std::endl;
+        std::cout << "The number of arguments is invalid! You should enter: 1) ./shear M or 2) ./shear M filename" << std::endl;
     return areValidArgs;
 }
 
+/**
+ * Método para generar las matrices de los archivos.txt
+ */
+/*
 void writeMatrixToFile(int** A, int M, const char* filename) {
     std::ofstream f(filename);
     for (int i = 0; i < M; i++) {
         for (int j = 0; j < M; j++) {
             f << A[i][j];
-            if (j < M - 1) f << " ";  // espacio entre números
+            if (j < M - 1) f << " "; 
         }
-        f << "\n";  // salto de línea entre filas
+        f << "\n";  
     }
-}
+}*/
 
-int main(/*int argc, char* argv[]*/) {
-    /*int M = 0;
+int main(int argc, char* argv[]) {
+    int M = 0;
     int** A = nullptr;
     if (parseAgs(argc, argv, M, A)) {
         int** copy = createMatrix(M);
@@ -255,7 +270,7 @@ int main(/*int argc, char* argv[]*/) {
             }
             std::cout << "\n";
         }*/
-/*
+
         // SEQUENTIAL EXECUTION
         std::cout << "\n======== SEQUENTIAL EXECUTION ========\n";
         double t1Sequential = now();
@@ -270,7 +285,7 @@ int main(/*int argc, char* argv[]*/) {
             }
             std::cout << "\n";
         }*/
-/*
+
         // PARALLEL EXECUTION
         std::cout << "\n======== PARALLEL EXECUTION ========\n";
         double t1Parallel = now();
@@ -285,7 +300,6 @@ int main(/*int argc, char* argv[]*/) {
             }
             std::cout << "\n";
         }*/
-/*
         double speedUp = (t2Sequential - t1Sequential) / (t2Parallel - t1Parallel) ;
         std::cout << "Speedup: " << speedUp << "x" << std::endl; 
 
@@ -297,9 +311,9 @@ int main(/*int argc, char* argv[]*/) {
         }
         delete[] A;
         delete[] copy;
-    } */
-    int** A = createMatrix(200);
-fillRandom(A, 200);
-writeMatrixToFile(A, 200, "fileB.txt");
+    } 
+    /*int** A = createMatrix(200);
+    fillRandom(A, 200);
+    writeMatrixToFile(A, 200, "fileB.txt");*/
     return 0;
 }
