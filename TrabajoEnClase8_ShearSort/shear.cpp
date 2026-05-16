@@ -225,8 +225,19 @@ bool parseAgs(int argc, char* argv[], int &M, int** A) {
     return areValidArgs;
 }
 
-int main(int argc, char* argv[]) {
-    int M = 0;
+void writeMatrixToFile(int** A, int M, const char* filename) {
+    std::ofstream f(filename);
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < M; j++) {
+            f << A[i][j];
+            if (j < M - 1) f << " ";  // espacio entre números
+        }
+        f << "\n";  // salto de línea entre filas
+    }
+}
+
+int main(/*int argc, char* argv[]*/) {
+    /*int M = 0;
     int** A = nullptr;
     if (parseAgs(argc, argv, M, A)) {
         int** copy = createMatrix(M);
@@ -244,7 +255,7 @@ int main(int argc, char* argv[]) {
             }
             std::cout << "\n";
         }*/
-
+/*
         // SEQUENTIAL EXECUTION
         std::cout << "\n======== SEQUENTIAL EXECUTION ========\n";
         double t1Sequential = now();
@@ -259,7 +270,7 @@ int main(int argc, char* argv[]) {
             }
             std::cout << "\n";
         }*/
-
+/*
         // PARALLEL EXECUTION
         std::cout << "\n======== PARALLEL EXECUTION ========\n";
         double t1Parallel = now();
@@ -274,7 +285,7 @@ int main(int argc, char* argv[]) {
             }
             std::cout << "\n";
         }*/
-
+/*
         double speedUp = (t2Sequential - t1Sequential) / (t2Parallel - t1Parallel) ;
         std::cout << "Speedup: " << speedUp << "x" << std::endl; 
 
@@ -286,7 +297,9 @@ int main(int argc, char* argv[]) {
         }
         delete[] A;
         delete[] copy;
-    }
-
+    } */
+    int** A = createMatrix(100);
+fillRandom(A, 100);
+writeMatrixToFile(A, 100, "matrizA.txt");
     return 0;
 }
