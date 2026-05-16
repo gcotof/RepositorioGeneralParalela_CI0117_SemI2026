@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
         // reiniciar grids 
         old_grid.initialize_boundaries();
         old_grid.initialize_interior();
-        new_grid = Grid(N);
+        new_grid.reset();
         double t1Parallel = now();
         solve_parallel(old_grid, new_grid, steps, threads);
         double t2Parallel = now();
@@ -48,7 +48,8 @@ int main(int argc, char* argv[]){
 
         cout << "Speedup: " << (t2Sequential - t1Sequential) / (t2Parallel - t1Parallel) << "x" << endl; 
 
-        //write_vtk(old_grid, "archivo.vtk");
+        write_vtk(old_grid, "heat.vtk");
+        cout << "Generating file: heat.vtk" << endl;
 
 
     }
