@@ -217,7 +217,7 @@ bool parseAgs(int argc, char* argv[], int &M, int** A) {
         else 
             readFromFile(A, M, argv[2]);
         if (M <= 0) 
-            std::cout << "N must be >= 1" << std::endl;
+            std::cout << "M must be >= 1" << std::endl;
         else 
             areValidArgs = true;
     } else 
@@ -226,10 +226,9 @@ bool parseAgs(int argc, char* argv[], int &M, int** A) {
 }
 
 int main(int argc, char* argv[]) {
-    int N = 0, M = 0;
+    int M = 0;
     int** A = nullptr;
-    if (parseAgs(argc, argv, N, A)) {
-        M = N*N;
+    if (parseAgs(argc, argv, M, A)) {
         int** copy = createMatrix(M);
 
         for (int i = 0; i < M; i++) {
