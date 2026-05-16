@@ -213,8 +213,8 @@ bool parseAgs(int argc, char* argv[], int &M, int** &A) {
         M = std::stoi(argv[1]);
         if (argc == 3) {
             std::string arg = argv[2]; 
-            if (M <= 0 || (arg == "fileA.txt" && M > 100) || (arg == "fileB.txt" && M > 200))
-                std::cout << "M must be >= 1 and (M <= 100 if file is fileA.txt or <= 200 if file is fileB.txt)" << std::endl;
+            if (M <= 0 || (arg == "fileA.txt" && M > 100) || (arg == "fileB.txt" && M > 1000))
+                std::cout << "M must be >= 1 and (M <= 100 if file is fileA.txt or <= 1000 if file is fileB.txt)" << std::endl;
             else {
                 A = createMatrix(M);
                 if (!readFromFile(A, M, arg.c_str()))
@@ -255,6 +255,7 @@ int main(int argc, char* argv[]) {
     int M = 0;
     int** A = nullptr;
     if (parseAgs(argc, argv, M, A)) {
+        std::cout << "Threads: " << omp_get_max_threads() << std::endl;
         int** copy = createMatrix(M);
 
         for (int i = 0; i < M; i++) {
@@ -285,7 +286,6 @@ int main(int argc, char* argv[]) {
             }
             std::cout << "\n";
         }*/
-
         // PARALLEL EXECUTION
         std::cout << "\n======== PARALLEL EXECUTION ========\n";
         double t1Parallel = now();
@@ -300,9 +300,9 @@ int main(int argc, char* argv[]) {
             }
             std::cout << "\n";
         }*/
+      
         double speedUp = (t2Sequential - t1Sequential) / (t2Parallel - t1Parallel) ;
-        std::cout << "Speedup: " << speedUp << "x" << std::endl; 
-
+        std::cout << "Speedup: " << speedUp << "x" << std::endl;
 
         // Freeing up memory
         for (int i = 0; i < M; i++) {
@@ -312,8 +312,10 @@ int main(int argc, char* argv[]) {
         delete[] A;
         delete[] copy;
     } 
-    /*int** A = createMatrix(200);
-    fillRandom(A, 200);
-    writeMatrixToFile(A, 200, "fileB.txt");*/
+   /*
+    int** A = createMatrix(1000);
+    fillRandom(A, 1000);
+    writeMatrixToFile(A, 1000, "fileB.txt");
+    */
     return 0;
 }
