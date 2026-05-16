@@ -136,6 +136,10 @@ public:
         data_.swap(other.data_);
     }
 
+    void reset() {
+        fill(data_.begin(), data_.end(), 0.0);
+    }
+
 private:
     /*
      * Member: data_
