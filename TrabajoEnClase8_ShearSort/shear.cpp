@@ -298,8 +298,8 @@ int main(/*int argc, char* argv[]*/) {
         delete[] A;
         delete[] copy;
     } */
-    int** A = createMatrix(100);
-fillRandom(A, 100);
-writeMatrixToFile(A, 100, "matrizA.txt");
+    int** A = createMatrix(200);
+fillRandom(A, 200);
+writeMatrixToFile(A, 200, "fileB.txt");
     return 0;
 }
