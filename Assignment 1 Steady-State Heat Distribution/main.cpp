@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
         double t2Parallel = now();
         cout << "The parallel execution time is: " << t2Parallel - t1Parallel << "s" << endl;
 
-        cout << "Speedup: " << (t1Sequential - t2Sequential) / (t2Parallel - t1Parallel) << "s" << endl; 
+        cout << "Speedup: " << (t2Sequential - t1Sequential) / (t2Parallel - t1Parallel) << "x" << endl; 
 
         //write_vtk(old_grid, "archivo.vtk");
 
