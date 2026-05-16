@@ -4,6 +4,7 @@
 #include <ctime>
 #include <cmath>
 #include <omp.h>
+#include <string>
 
 // Bubble Sort Adapted
 /**
@@ -206,70 +207,87 @@ inline double now() {
     return omp_get_wtime();
 }
 
-int main() {
-    int M = 100;
+bool parseAgs(int argc, char* argv[], int &M, int** A) {
+    bool areValidArgs = false;
+    if (argc == 2 || argc == 3) {
+        M = std::stoi(argv[1]);
+        A = createMatrix(M);
+        if (argc == 2)
+            fillRandom(A, M);
+        else 
+            readFromFile(A, M, argv[2]);
+        if (M <= 0) 
+            std::cout << "N must be >= 1" << std::endl;
+        else 
+            areValidArgs = true;
+    } else 
+        std::cout << "The number of arguments is invalid! You should enter: 1) ./shear N or 2) ./shear N fileA/B" << std::endl;
+    return areValidArgs;
+}
 
-    int** A = createMatrix(M);
+int main(int argc, char* argv[]) {
+    int N = 0, M = 0;
+    int** A = nullptr;
+    if (parseAgs(argc, argv, N, A)) {
+        M = N*N;
+        int** copy = createMatrix(M);
 
-    fillRandom(A, M);
-
-    int** copy = createMatrix(M);
-
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < M; j++) {
-            copy[i][j] = A[i][j];
+        for (int i = 0; i < M; i++) {
+            for (int j = 0; j < M; j++) {
+                copy[i][j] = A[i][j];
+            }
         }
+
+        /*std::cout << "Original matrix:\n";
+        for (int i = 0; i < M; i++) {
+            for (int j = 0; j < M; j++) {
+                std::cout << A[i][j] << "\t";
+            }
+            std::cout << "\n";
+        }*/
+
+        // SEQUENTIAL EXECUTION
+        std::cout << "\n======== SEQUENTIAL EXECUTION ========\n";
+        double t1Sequential = now();
+        shearSortSequential(A, M);
+        double t2Sequential = now();
+        std::cout << "The sequential execution time is: " << t2Sequential - t1Sequential << "s" << std::endl;
+
+        /*std::cout << "\nSorted matrix:\n";
+        for (int i = 0; i < M; i++) {
+            for (int j = 0; j < M; j++) {
+                std::cout << A[i][j] << "\t";
+            }
+            std::cout << "\n";
+        }*/
+
+        // PARALLEL EXECUTION
+        std::cout << "\n======== PARALLEL EXECUTION ========\n";
+        double t1Parallel = now();
+        shearSort(copy, M);
+        double t2Parallel = now();
+        std::cout << "The parallel execution time is: " << t2Parallel - t1Parallel << "s" << std::endl;
+
+        /*std::cout << "\nSorted matrix:\n";
+        for (int i = 0; i < M; i++) {
+            for (int j = 0; j < M; j++) {
+                std::cout << copy[i][j] << "\t";
+            }
+            std::cout << "\n";
+        }*/
+
+        double speedUp = (t2Sequential - t1Sequential) / (t2Parallel - t1Parallel) ;
+        std::cout << "Speedup: " << speedUp << "x" << std::endl; 
+
+
+        // Freeing up memory
+        for (int i = 0; i < M; i++) {
+            delete[] A[i];
+            delete[] copy[i];
+        }
+        delete[] A;
+        delete[] copy;
     }
-
-    /*std::cout << "Original matrix:\n";
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < M; j++) {
-            std::cout << A[i][j] << "\t";
-        }
-        std::cout << "\n";
-    }*/
-
-    // SEQUENTIAL EXECUTION
-    std::cout << "\n======== SEQUENTIAL EXECUTION ========\n";
-    double t1Sequential = now();
-    shearSortSequential(A, M);
-    double t2Sequential = now();
-    std::cout << "The sequential execution time is: " << t2Sequential - t1Sequential << "s" << std::endl;
-
-    /*std::cout << "\nSorted matrix:\n";
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < M; j++) {
-            std::cout << A[i][j] << "\t";
-        }
-        std::cout << "\n";
-    }*/
-
-    // PARALLEL EXECUTION
-    std::cout << "\n======== PARALLEL EXECUTION ========\n";
-    double t1Parallel = now();
-    shearSort(copy, M);
-    double t2Parallel = now();
-    std::cout << "The parallel execution time is: " << t2Parallel - t1Parallel << "s" << std::endl;
-
-    /*std::cout << "\nSorted matrix:\n";
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < M; j++) {
-            std::cout << copy[i][j] << "\t";
-        }
-        std::cout << "\n";
-    }*/
-
-    double speedUp = (t2Sequential - t1Sequential) / (t2Parallel - t1Parallel) ;
-    std::cout << "Speedup: " << speedUp << "x" << std::endl; 
-
-
-    // Freeing up memory
-    for (int i = 0; i < M; i++) {
-        delete[] A[i];
-        delete[] copy[i];
-    }
-    delete[] A;
-    delete[] copy;
 
     return 0;
 }
