@@ -1,0 +1,503 @@
+/var/spool//job545721/slurm_script: línea 10: cd: /home/curso-940/heat: No existe el fichero o el directorio
+====================================
+COMPILING
+====================================
+rm -f heat *.vtk
+g++ -O2 -fopenmp main.cpp grid.cpp output.cpp solver.cpp parallel.cpp -o heat
+
+====================================
+STRONG SCALING
+====================================
+
+====================================
+N=100 THREADS=1
+====================================
+--- Run 1 ---
+The sequential execution time is: 1.34248s
+The parallel execution time is: 1.38206s
+Speedup: 0.971362x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 1.36037s
+The parallel execution time is: 1.39703s
+Speedup: 0.973755x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 1.34679s
+The parallel execution time is: 1.38182s
+Speedup: 0.97465x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 1.34988
+Par = 1.38697
+Speedup = 0.973258
+Efficiency = 97.3258
+
+====================================
+N=100 THREADS=2
+====================================
+--- Run 1 ---
+The sequential execution time is: 1.33193s
+The parallel execution time is: 0.684771s
+Speedup: 1.94507x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 1.36557s
+The parallel execution time is: 0.69973s
+Speedup: 1.95157x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 1.36273s
+The parallel execution time is: 0.691878s
+Speedup: 1.96961x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 1.35341
+Par = 0.692127
+Speedup = 1.95544
+Efficiency = 97.772
+
+====================================
+N=100 THREADS=4
+====================================
+--- Run 1 ---
+The sequential execution time is: 1.32815s
+The parallel execution time is: 0.404125s
+Speedup: 3.28647x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 1.34544s
+The parallel execution time is: 0.40404s
+Speedup: 3.32998x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 1.32958s
+The parallel execution time is: 0.402002s
+Speedup: 3.30739x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 1.33439
+Par = 0.40339
+Speedup = 3.30794
+Efficiency = 82.6985
+
+====================================
+N=100 THREADS=8
+====================================
+--- Run 1 ---
+The sequential execution time is: 1.32972s
+The parallel execution time is: 0.351773s
+Speedup: 3.78007x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 1.33405s
+The parallel execution time is: 0.289642s
+Speedup: 4.60586x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 1.34181s
+The parallel execution time is: 0.351292s
+Speedup: 3.81964x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 1.33519
+Par = 0.330902
+Speedup = 4.035
+Efficiency = 50.4375
+
+====================================
+N=100 THREADS=16
+====================================
+--- Run 1 ---
+The sequential execution time is: 1.33067s
+The parallel execution time is: 0.513108s
+Speedup: 2.59335x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 1.37832s
+The parallel execution time is: 0.518834s
+Speedup: 2.65657x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 1.33038s
+The parallel execution time is: 0.443658s
+Speedup: 2.99865x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 1.34646
+Par = 0.491867
+Speedup = 2.73745
+Efficiency = 17.1091
+
+====================================
+N=200 THREADS=1
+====================================
+--- Run 1 ---
+The sequential execution time is: 14.3682s
+The parallel execution time is: 14.4222s
+Speedup: 0.996254x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 14.4066s
+The parallel execution time is: 14.495s
+Speedup: 0.993904x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 14.3314s
+The parallel execution time is: 14.38s
+Speedup: 0.996623x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 14.3687
+Par = 14.4324
+Speedup = 0.995586
+Efficiency = 99.5586
+
+====================================
+N=200 THREADS=2
+====================================
+--- Run 1 ---
+The sequential execution time is: 14.33s
+The parallel execution time is: 12.1029s
+Speedup: 1.18401x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 14.5211s
+The parallel execution time is: 12.1064s
+Speedup: 1.19946x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 14.3432s
+The parallel execution time is: 12.0734s
+Speedup: 1.188x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 14.3981
+Par = 12.0942
+Speedup = 1.1905
+Efficiency = 59.525
+
+====================================
+N=200 THREADS=4
+====================================
+--- Run 1 ---
+The sequential execution time is: 14.2665s
+The parallel execution time is: 7.90872s
+Speedup: 1.8039x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 14.3744s
+The parallel execution time is: 8.74339s
+Speedup: 1.64403x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 14.5082s
+The parallel execution time is: 8.07192s
+Speedup: 1.79737x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 14.383
+Par = 8.24133
+Speedup = 1.74523
+Efficiency = 43.6307
+
+====================================
+N=200 THREADS=8
+====================================
+--- Run 1 ---
+The sequential execution time is: 14.3309s
+The parallel execution time is: 7.85144s
+Speedup: 1.82525x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 14.2757s
+The parallel execution time is: 7.87092s
+Speedup: 1.81373x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 14.3789s
+The parallel execution time is: 8.0049s
+Speedup: 1.79626x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 14.3285
+Par = 7.9091
+Speedup = 1.81165
+Efficiency = 22.6456
+
+====================================
+N=200 THREADS=16
+====================================
+--- Run 1 ---
+The sequential execution time is: 14.3188s
+The parallel execution time is: 7.95944s
+Speedup: 1.79898x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 14.243s
+The parallel execution time is: 7.81783s
+Speedup: 1.82186x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 14.3347s
+The parallel execution time is: 7.91957s
+Speedup: 1.81004x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 14.2988
+Par = 7.89897
+Speedup = 1.81021
+Efficiency = 11.3138
+
+====================================
+N=300 THREADS=1
+====================================
+--- Run 1 ---
+The sequential execution time is: 46.7107s
+The parallel execution time is: 46.7701s
+Speedup: 0.99873x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 46.6342s
+The parallel execution time is: 46.7205s
+Speedup: 0.998153x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 47.4112s
+The parallel execution time is: 47.4743s
+Speedup: 0.998669x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 46.9187
+Par = 46.9883
+Speedup = 0.998519
+Efficiency = 99.8519
+
+====================================
+N=300 THREADS=2
+====================================
+--- Run 1 ---
+The sequential execution time is: 46.7326s
+The parallel execution time is: 39.2615s
+Speedup: 1.19029x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 46.7212s
+The parallel execution time is: 39.2402s
+Speedup: 1.19065x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 46.6478s
+The parallel execution time is: 39.2578s
+Speedup: 1.18824x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 46.7007
+Par = 39.2533
+Speedup = 1.18973
+Efficiency = 59.4865
+
+====================================
+N=300 THREADS=4
+====================================
+--- Run 1 ---
+The sequential execution time is: 47.3967s
+The parallel execution time is: 21.8425s
+Speedup: 2.16993x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 46.9725s
+The parallel execution time is: 21.8662s
+Speedup: 2.14818x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 46.5917s
+The parallel execution time is: 22.0915s
+Speedup: 2.10904x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 46.987
+Par = 21.9334
+Speedup = 2.14226
+Efficiency = 53.5565
+
+====================================
+N=300 THREADS=8
+====================================
+--- Run 1 ---
+The sequential execution time is: 46.7119s
+The parallel execution time is: 23.6637s
+Speedup: 1.97399x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 47.2541s
+The parallel execution time is: 22.883s
+Speedup: 2.06503x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 47.8525s
+The parallel execution time is: 23.1765s
+Speedup: 2.06469x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 47.273
+Par = 23.2411
+Speedup = 2.03403
+Efficiency = 25.4254
+
+====================================
+N=300 THREADS=16
+====================================
+--- Run 1 ---
+The sequential execution time is: 46.9366s
+The parallel execution time is: 28.1254s
+Speedup: 1.66884x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 46.5998s
+The parallel execution time is: 27.8473s
+Speedup: 1.6734x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 47.444s
+The parallel execution time is: 28.4054s
+Speedup: 1.67025x
+Generating file: heat.vtk
+
+AVERAGES:
+Seq = 46.9933
+Par = 28.126
+Speedup = 1.67081
+Efficiency = 10.4426
+
+====================================
+WEAK SCALING
+====================================
+
+====================================
+THREADS=1 N=100
+====================================
+--- Run 1 ---
+The sequential execution time is: 1.31229s
+The parallel execution time is: 1.3518s
+Speedup: 0.970775x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 1.31597s
+The parallel execution time is: 1.35419s
+Speedup: 0.971772x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 1.32836s
+The parallel execution time is: 1.36551s
+Speedup: 0.972792x
+Generating file: heat.vtk
+
+Avg Par = 1.35717
+Weak Eff = 100
+
+====================================
+THREADS=2 N=125
+====================================
+--- Run 1 ---
+The sequential execution time is: 2.75566s
+The parallel execution time is: 1.36582s
+Speedup: 2.01759x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 2.77377s
+The parallel execution time is: 1.41647s
+Speedup: 1.95822x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 2.77338s
+The parallel execution time is: 1.39238s
+Speedup: 1.99182x
+Generating file: heat.vtk
+
+Avg Par = 1.39156
+Weak Eff = 97.5287
+
+====================================
+THREADS=4 N=158
+====================================
+--- Run 1 ---
+The sequential execution time is: 6.0039s
+The parallel execution time is: 2.38983s
+Speedup: 2.51226x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 5.88983s
+The parallel execution time is: 2.4172s
+Speedup: 2.43663x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 5.88554s
+The parallel execution time is: 2.41465s
+Speedup: 2.43743x
+Generating file: heat.vtk
+
+Avg Par = 2.40723
+Weak Eff = 56.3789
+
+====================================
+THREADS=8 N=200
+====================================
+--- Run 1 ---
+The sequential execution time is: 14.2948s
+The parallel execution time is: 7.9991s
+Speedup: 1.78706x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 14.3179s
+The parallel execution time is: 8.12216s
+Speedup: 1.76282x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 14.2691s
+The parallel execution time is: 7.87126s
+Speedup: 1.8128x
+Generating file: heat.vtk
+
+Avg Par = 7.99753
+Weak Eff = 16.9699
+
+====================================
+THREADS=16 N=251
+====================================
+--- Run 1 ---
+The sequential execution time is: 30.3501s
+The parallel execution time is: 15.2584s
+Speedup: 1.98907x
+Generating file: heat.vtk
+--- Run 2 ---
+The sequential execution time is: 29.9908s
+The parallel execution time is: 14.3509s
+Speedup: 2.08982x
+Generating file: heat.vtk
+--- Run 3 ---
+The sequential execution time is: 30.0212s
+The parallel execution time is: 14.255s
+Speedup: 2.106x
+Generating file: heat.vtk
+
+Avg Par = 14.6214
+Weak Eff = 9.28208
+
+====================================
+DONE
+====================================
