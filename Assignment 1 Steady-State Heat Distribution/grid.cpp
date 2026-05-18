@@ -27,9 +27,9 @@ void Grid::initialize_boundaries() {
             for (int k = 0; k < N; k++) {
                 if (i == 0 || i == N-1 || j == 0 || j == N-1 || k == 0 || k == N-1) {
                     if (j == N-1)
-                        set(i, j, k, 0.0); // bordes de la cara posterior
+                        set(i, j, k, 0.0); 
                     else 
-                        set(i, j, k, 100.0); // demás bordes
+                        set(i, j, k, 100.0); 
                 }
             }
         }
@@ -57,7 +57,7 @@ void Grid::initialize_interior() {
     for (int i = 1; i <= N-2; i++) {
         for (int j = 1; j <= N-2; j++) {
             for (int k = 1; k <= N-2; k++) 
-                set(i, j, k, average); // c/u de los punteros del interior del cubo se inicializan en base al promedio de la temp de los bordes
+                set(i, j, k, average); 
         }
     }
 }
