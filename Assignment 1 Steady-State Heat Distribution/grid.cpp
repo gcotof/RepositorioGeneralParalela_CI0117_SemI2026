@@ -1,15 +1,26 @@
 #include "grid.h"
 
 /**
- * Nota: 
- *  i -> de abajo hacía arriba
- *  j -> de adelante hacía trás
- *  k -> de izq a der
+ * Note:
+ *  i -> bottom to top
+ *  j -> front to back
+ *  k -> left to right
  */
 
- /**
-  * Método encargado de inicializar la temperatura de los bordes del cubo.
-  */
+/*
+ * Method: initialize_boundaries
+ * Initializes the temperature values of the boundary cells of the 3D cube.
+ *
+ * Behavior:
+ *   - Iterates over all cells in the N x N x N grid
+ *   - Only modifies cells located on the faces of the cube (boundary cells)
+ *   - Posterior face (j == N-1): set to 0.0°C (cold face)
+ *   - All other five faces: set to 100.0°C (hot faces)
+ *
+ * Note:
+ *   - Interior cells are not modified by this method
+ *   - Should be called before initialize_interior()
+ */
 void Grid::initialize_boundaries() {
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
@@ -25,8 +36,21 @@ void Grid::initialize_boundaries() {
     }
 }
 
-/**
- * Método encargado de inicializar la temp del interior del cubo.
+/*
+ * Method: initialize_interior
+ * Initializes the temperature of all interior cells of the 3D cube.
+ *
+ * Behavior:
+ *   - Computes the average temperature across all six boundary faces:
+ *       (100 + 100 + 100 + 0 + 100 + 100) / 6 ≈ 83.33°C
+ *   - Sets every interior cell (i, j, k) to that average value
+ *   - Only iterates over interior indices: i, j, k ∈ [1, N-2]
+ *
+ * Note:
+ *   - Boundary cells are not modified by this method
+ *   - Should be called after initialize_boundaries()
+ *   - This initial value serves as a neutral starting point
+ *     that accelerates convergence toward the steady state
  */
 void Grid::initialize_interior() {
     const double average = (100.0 + 100.0 + 100.0 + 0.0 + 100.0 + 100.0) / 6.0;
