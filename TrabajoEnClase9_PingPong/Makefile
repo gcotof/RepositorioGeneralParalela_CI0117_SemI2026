@@ -1,7 +1,7 @@
 CXX = mpic++
 CXXFLAGS = -Wall -Wextra -O2 -std=c++17
 
-TARGETS = pingpong ringu colectivas_allreduce
+TARGETS = pingpong ringu colectivas_allreduce colectivas_reduce
 
 all: $(TARGETS)
 
@@ -13,6 +13,9 @@ ringu: ringu.cpp
 
 allreduce: colectivas_allreduce.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
+
+colectivas_reduce: colectivas_reduce.cpp	
+	$(CXX) $(CXXFLAGS) -o $@ $
 
 clean:
 	rm -f $(TARGETS)
