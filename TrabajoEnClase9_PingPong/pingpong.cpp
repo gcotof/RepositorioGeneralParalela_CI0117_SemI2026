@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
                 break;
 
             // Increment the counter.
-            counter++;
+            //counter++;
 
             // Send it back to process 1.
             MPI_Send(
