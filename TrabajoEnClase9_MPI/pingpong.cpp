@@ -62,9 +62,6 @@ int main(int argc, char* argv[]) {
             if (counter >= 1000)
                 break;
 
-            // Increment the counter.
-            //counter++;
-
             // Send it back to process 1.
             MPI_Send(
                 &counter,
