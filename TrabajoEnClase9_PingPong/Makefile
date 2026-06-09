@@ -15,7 +15,7 @@ colectivas_allreduce: colectivas_allreduce.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 colectivas_reduce: colectivas_reduce.cpp	
-	$(CXX) $(CXXFLAGS) -o $@ $
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
 	rm -f $(TARGETS)
