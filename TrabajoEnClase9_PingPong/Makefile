@@ -11,7 +11,7 @@ pingpong: pingpong.cpp
 ringu: ringu.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-allreduce: colectivas_allreduce.cpp
+colectivas_allreduce: colectivas_allreduce.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 colectivas_reduce: colectivas_reduce.cpp	
