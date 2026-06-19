@@ -1,4 +1,3 @@
-```cpp
 // ---------------------------------------------------------------------------
 // main.cpp
 //
@@ -22,7 +21,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "mpi_utils.hpp"
+#include "mpiUtils.hpp"
 
 namespace {
 
@@ -113,4 +112,3 @@ int main(int argc, char** argv) {
 
     return EXIT_SUCCESS;
 }
-```
