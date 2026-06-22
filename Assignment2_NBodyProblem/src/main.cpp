@@ -20,6 +20,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 #include "mpiUtils.hpp"
 
@@ -33,6 +34,99 @@ struct SimulationConfig {
     bool printOutput         = false;  // PRINT_FLAG: 1 = write every 100 iterations
     bool fixedInit           = false;  // INIT_FLAG: 1 = fixed positions
 };
+
+// ---------------------------------------------------------------------------
+// Task 3 + 4 + 7: ring rotation loop, return step, and communication test.
+//
+// This validates the FULL communication pattern described in steps 1-5 of
+// the assignment's algorithm, using plain `int` payloads as a stand-in for
+// `std::vector<Particle>`. It intentionally does NOT depend on Person B's
+// Particle class, so it can be implemented and tested right now.
+//
+// Algorithm recap (see EnunciadoProyectoParalela.md):
+//   1. Send own data to the right neighbor.                      (initial)
+//   2. Receive from the left neighbor -> "remotes".               (evolve goes here)
+//   3. Send "remotes" to the right neighbor.                      (forward hop)
+//   4. Repeat steps 2-3 a total of (p-1)/2 = stages times.
+//   5. After the loop, instead of forwarding again, send the
+//      currently-held remotes DIRECTLY BACK to whichever rank
+//      originally owned them, and receive back this rank's own
+//      original data from whoever is holding it.
+//
+// Once Task 2 (MPI_Datatype for Particle) and Person B's evolve() are
+// ready, this becomes the real loop: replace `int` with `Particle`,
+// MPI_INT with mpi_particle_type, and insert the evolve()/merge() calls
+// at the marked points.
+// ---------------------------------------------------------------------------
+bool runRingCommunicationTest(const mpiutils::RingTopology& topo, int n) {
+    constexpr int kForwardTag = 42;
+    constexpr int kReturnTag  = 43;
+
+    // Trivial case: a single process has no neighbors to exchange with.
+    if (topo.size == 1) {
+        std::cout << "[rank 0] Ring test skipped (size=1, nothing to rotate).\n";
+        return true;
+    }
+
+    // Dummy "particles": unique IDs that encode their owner rank, so we can
+    // verify at the end that every value returns to its rightful owner.
+    std::vector<int> locals(n);
+    for (int i = 0; i < n; ++i) {
+        locals[i] = topo.rank * 100000 + i;
+    }
+
+    std::vector<int> remotes(n);
+
+    MPI_Status status;
+
+    // --- Step 1 + first receive (step 2 of stage 1) ---
+    // TODO(Person B): the data received here is where evolve(locals, remotes,
+    //                  n, n) must be called once Particle/evolve() exist.
+    MPI_Sendrecv(locals.data(), n, MPI_INT, topo.right, kForwardTag,
+                 remotes.data(), n, MPI_INT, topo.left, kForwardTag,
+                 MPI_COMM_WORLD, &status);
+
+    // --- Remaining forward hops (steps 2-3 repeated) ---
+    // The initial Sendrecv above already counted as 1 hop, so this loop
+    // performs the remaining (stages - 1) hops, for a total of `stages`.
+    std::vector<int> nextRemotes(n);
+    for (int stage = 1; stage < topo.stages; ++stage) {
+        // TODO(Person B): evolve(locals, remotes, n, n) goes here too,
+        //                 before forwarding remotes onward.
+        MPI_Sendrecv(remotes.data(), n, MPI_INT, topo.right, kForwardTag,
+                     nextRemotes.data(), n, MPI_INT, topo.left, kForwardTag,
+                     MPI_COMM_WORLD, &status);
+        remotes.swap(nextRemotes);
+    }
+
+    // --- Step 5: return step ---
+    // After `stages` forward hops, the data we are holding in `remotes`
+    // originated `stages` ranks to our left. We send it directly back to
+    // that owner, and symmetrically receive our OWN original data back
+    // from whichever rank is `stages` hops to our right.
+    int originOfHeldData = (topo.rank - topo.stages + topo.size) % topo.size;
+    int holderOfOwnData  = (topo.rank + topo.stages) % topo.size;
+
+    std::vector<int> returned(n);
+    MPI_Sendrecv(remotes.data(), n, MPI_INT, originOfHeldData, kReturnTag,
+                 returned.data(), n, MPI_INT, holderOfOwnData, kReturnTag,
+                 MPI_COMM_WORLD, &status);
+
+    // --- Verification: did we get back exactly what we sent out? ---
+    bool ok = (returned == locals);
+
+    std::cout << "[rank " << topo.rank << "] ring test: "
+              << (ok ? "PASS" : "FAIL")
+              << " (originOfHeldData=" << originOfHeldData
+              << ", holderOfOwnData=" << holderOfOwnData << ")\n";
+
+    if (!ok) {
+        std::cout << "[rank " << topo.rank << "] expected[0]=" << locals[0]
+                   << " got[0]=" << returned[0] << '\n';
+    }
+
+    return ok;
+}
 
 void printUsage(const char* programName) {
     std::cerr << "Usage: " << programName
@@ -100,11 +194,23 @@ int main(int argc, char** argv) {
     }
 
     // ----------------------------------------------------------------------
+    // Task 3 + 4 + 7: validate the ring rotation + return step with dummy
+    // payloads, before Particle/evolve() (Person B) are wired in.
+    // ----------------------------------------------------------------------
+    bool ringOk = runRingCommunicationTest(topo, cfg.particlesPerProcess);
+    if (!ringOk) {
+        std::cerr << "[rank " << topo.rank << "] Ring communication test FAILED.\n";
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    }
+
+    // ----------------------------------------------------------------------
     // TODO(Person B): initialize std::vector<Particle> locals with
     //                 cfg.particlesPerProcess particles (init.hpp/cpp).
-    // TODO(Person A, Task 2): create MPI_Datatype mpi_particle_type.
-    // TODO(Person A, Task 3): ring rotation loop (topo.stages stages).
-    // TODO(Person A, Task 4): return step (e) to the original processor.
+    // TODO(Person A, Task 2): create MPI_Datatype mpi_particle_type, agreed
+    //                         with Person B on Particle's exact fields.
+    // TODO(Person A, Task 3/4 - real): replace the int buffers above with
+    //                 std::vector<Particle> and mpi_particle_type, and call
+    //                 evolve(locals, remotes, ...) at the marked points.
     // TODO(Person B): merge() + evolve() + updateProperties() (steps f, g).
     // TODO(Person A, Task 5): gather on rank 0 + file output
     //                         every 100 iterations if cfg.printOutput.

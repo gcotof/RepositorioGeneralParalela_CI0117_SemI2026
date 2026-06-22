@@ -12,6 +12,7 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 find_package(MPI REQUIRED)
+find_package(OpenMP REQUIRED)
 
 add_executable(nBody
     src/main.cpp
@@ -20,4 +21,4 @@ add_executable(nBody
 
 target_include_directories(nBody PRIVATE include)
 
-target_link_libraries(nBody PRIVATE MPI::MPI_CXX)
+target_link_libraries(nBody PRIVATE MPI::MPI_CXX OpenMP::OpenMP_CXX)
