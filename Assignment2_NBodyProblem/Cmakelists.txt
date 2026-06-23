@@ -17,6 +17,7 @@ find_package(OpenMP REQUIRED)
 add_executable(nBody
     src/main.cpp
     src/mpiUtils.cpp
+    src/io.cpp
 )
 
 target_include_directories(nBody PRIVATE include)
