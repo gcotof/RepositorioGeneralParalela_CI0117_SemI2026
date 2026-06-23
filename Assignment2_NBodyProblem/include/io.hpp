@@ -6,38 +6,15 @@
 // Responsibility of Person A.
 // Handles gathering of particle data on rank 0 and writing output files
 // compatible with Paraview (CSV format).
-//
-// Temporary stub: defines Particle locally until Person B delivers
-// particle.hpp. When that happens:
-//   1. Remove the struct below.
-//   2. Add:  #include "particle.hpp"
-//   That is the only change needed in this file.
 // ---------------------------------------------------------------------------
 
 #include <mpi.h>
 #include <string>
 #include <vector>
 
-// --- Temporary Particle stub (remove when particle.hpp is ready) -----------
-// Must match the layout agreed with Person B: 10 contiguous doubles.
-// The static_assert in io.cpp enforces this at compile time.
-struct alignas(8) Particle {
-    double x,  y,  z;
-    double vx, vy, vz;
-    double fx, fy, fz;
-    double mass;
-};
-// --------------------------------------------------------------------------
+#include "particle.hpp"
 
 namespace io {
-
-/**
- * Registers the MPI_Datatype for Particle (10 contiguous doubles).
- * Must be called once after MPI_Init and before any gather/write call.
- * The returned type is already committed; caller must call
- * MPI_Type_free() on it before MPI_Finalize.
- */
-MPI_Datatype registerParticleType();
 
 /**
  * Gathers all particles on rank 0 and writes a CSV file.

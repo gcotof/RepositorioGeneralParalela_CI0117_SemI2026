@@ -8,58 +8,13 @@
 
 #include <mpi.h>
 
-#include <cstddef>   // offsetof
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
 
-// Catch layout mismatches between this file and the agreed Particle struct
-// before they produce silent MPI corruption.
-static_assert(sizeof(Particle) == 10 * sizeof(double),
-              "Particle has unexpected padding — check layout with Person B");
-
 namespace io {
-
-// ---------------------------------------------------------------------------
-// registerParticleType
-// ---------------------------------------------------------------------------
-MPI_Datatype registerParticleType() {
-    // 10 fields, each a single double.
-    constexpr int nfields = 10;
-
-    int          blocklengths[nfields];
-    MPI_Aint     offsets[nfields];
-    MPI_Datatype types[nfields];
-
-    const MPI_Aint base = 0; // offsets are relative to the struct start
-
-    // Field order must exactly match Particle's memory layout.
-    const MPI_Aint fieldOffsets[nfields] = {
-        static_cast<MPI_Aint>(offsetof(Particle, x)),
-        static_cast<MPI_Aint>(offsetof(Particle, y)),
-        static_cast<MPI_Aint>(offsetof(Particle, z)),
-        static_cast<MPI_Aint>(offsetof(Particle, vx)),
-        static_cast<MPI_Aint>(offsetof(Particle, vy)),
-        static_cast<MPI_Aint>(offsetof(Particle, vz)),
-        static_cast<MPI_Aint>(offsetof(Particle, fx)),
-        static_cast<MPI_Aint>(offsetof(Particle, fy)),
-        static_cast<MPI_Aint>(offsetof(Particle, fz)),
-        static_cast<MPI_Aint>(offsetof(Particle, mass)),
-    };
-
-    for (int i = 0; i < nfields; ++i) {
-        blocklengths[i] = 1;
-        offsets[i]      = fieldOffsets[i] - base;
-        types[i]        = MPI_DOUBLE;
-    }
-
-    MPI_Datatype mpiType;
-    MPI_Type_create_struct(nfields, blocklengths, offsets, types, &mpiType);
-    MPI_Type_commit(&mpiType);
-    return mpiType;
-}
 
 // ---------------------------------------------------------------------------
 // gatherAndWrite

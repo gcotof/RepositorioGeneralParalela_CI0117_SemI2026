@@ -1,5 +1,6 @@
 #pragma once
 #include <mpi.h>
+#include "particle.hpp"
 // ---------------------------------------------------------------------------
 // mpi_utils.hpp
 //
@@ -51,6 +52,19 @@ struct RingTopology {
     int right  = 0;
     int stages = 0;
 };
+
+/**
+ * Creates and commits the MPI_Datatype for Particle (10 contiguous doubles).
+ *
+ * Must be called once after MPI_Init and before any communication that
+ * involves Particle data. The returned type is already committed; the
+ * caller must call MPI_Type_free() on it before MPI_Finalize.
+ *
+ * Layout assumed (in order): x, y, z, vx, vy, vz, fx, fy, fz, mass.
+ * A static_assert in mpiUtils.cpp enforces sizeof(Particle) == 10*sizeof(double)
+ * so padding is caught at compile time.
+ */
+MPI_Datatype registerParticleType();
 
 /**
  * Builds the RingTopology for the calling process, validating that the

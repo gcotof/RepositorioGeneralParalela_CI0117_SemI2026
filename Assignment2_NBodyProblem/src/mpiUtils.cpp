@@ -1,9 +1,45 @@
 #include "mpiUtils.hpp"
 
+#include <cstddef>   // offsetof
 #include <cstdlib>
 #include <iostream>
 
+static_assert(sizeof(Particle) == 10 * sizeof(double),
+              "Particle has unexpected padding — check layout with Person B");
+
 namespace mpiutils {
+
+MPI_Datatype registerParticleType() {
+    constexpr int nfields = 10;
+
+    int          blocklengths[nfields];
+    MPI_Aint     offsets[nfields];
+    MPI_Datatype types[nfields];
+
+    const MPI_Aint fieldOffsets[nfields] = {
+        static_cast<MPI_Aint>(offsetof(Particle, x)),
+        static_cast<MPI_Aint>(offsetof(Particle, y)),
+        static_cast<MPI_Aint>(offsetof(Particle, z)),
+        static_cast<MPI_Aint>(offsetof(Particle, vx)),
+        static_cast<MPI_Aint>(offsetof(Particle, vy)),
+        static_cast<MPI_Aint>(offsetof(Particle, vz)),
+        static_cast<MPI_Aint>(offsetof(Particle, fx)),
+        static_cast<MPI_Aint>(offsetof(Particle, fy)),
+        static_cast<MPI_Aint>(offsetof(Particle, fz)),
+        static_cast<MPI_Aint>(offsetof(Particle, mass)),
+    };
+
+    for (int i = 0; i < nfields; ++i) {
+        blocklengths[i] = 1;
+        offsets[i]      = fieldOffsets[i];
+        types[i]        = MPI_DOUBLE;
+    }
+
+    MPI_Datatype mpiType;
+    MPI_Type_create_struct(nfields, blocklengths, offsets, types, &mpiType);
+    MPI_Type_commit(&mpiType);
+    return mpiType;
+}
 
 MpiEnvironment::MpiEnvironment(int& argc, char**& argv) {
     int already = 0;
