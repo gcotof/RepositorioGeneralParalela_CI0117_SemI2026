@@ -12,8 +12,11 @@ void evolve(Particle* locals, Particle* remotes, int nlocal, int nremote) {
         double rx = locals[i].x - remotes[j].x;
         double ry = locals[i].y - remotes[j].y;
         double rz = locals[i].z - remotes[j].z;
-        double r = std::sqrt(rx*rx + ry*ry + rz*rz);
-        double f = B/(r*r*r*r*r*r*r*r*r*r*r*r) - A/(r*r*r*r*r*r);
+        double r2 = rx*rx + ry*ry + rz*rz;
+        double r = sqrt(r2);
+        double r6 = r2*r2*r2;
+        double r12 = r6*r6;
+        double f = B/r12 - A/r6;
         double fx = f * rx / r;
         double fy = f * ry / r;
         double fz = f * rz / r;
@@ -28,5 +31,14 @@ void evolve(Particle* locals, Particle* remotes, int nlocal, int nremote) {
         #pragma omp atomic
         remotes[j].fz -= fz;
         }
+    }
+}
+
+void merge(vector<Particle>& locals, const vector<Particle>& returned) {
+    #pragma omp parallel for schedule(static)
+    for (int i = 0; i < (int)locals.size(); ++i) {
+        locals[i].fx += returned[i].fx;
+        locals[i].fy += returned[i].fy;
+        locals[i].fz += returned[i].fz;
     }
 }
