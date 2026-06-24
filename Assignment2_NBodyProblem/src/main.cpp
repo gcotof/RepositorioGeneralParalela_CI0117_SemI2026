@@ -209,6 +209,40 @@ int main(int argc, char** argv) {
 
     MPI_Datatype mpiType = mpiutils::registerParticleType();
     std::vector<Particle> locals = cfg.fixedInit ? initFixed(cfg.particlesPerProcess, topo.rank) : initRandom(cfg.particlesPerProcess, topo.rank);
+    std::vector<Particle> remotes(cfg.particlesPerProcess); // guarda las particlas que llegan de otro proceso en cada etpa.
+    std::vector<Particle> nextRemotes(cfg.particlesPerProcess); // buffer temp. para el intercambio en cada rotación.
+    std::vector<Particle> returned(cfg.particlesPerProcess); // guarda las particulas que vuelven al paso de retorno.
+
+    constexpr int kFwdTag = 42;
+    constexpr int kRetTag = 43;
+    MPI_Status status;
+
+    for (int i = 0; i < cfg.iterations; ++i) {
+        MPI_Sendrecv(locals.data(),  cfg.particlesPerProcess, mpiType, topo.right, kFwdTag, remotes.data(), cfg.particlesPerProcess, mpiType, topo.left,  
+            kFwdTag, MPI_COMM_WORLD, &status);
+        evolve(locals.data(), remotes.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+
+        for (int j = 1; j < topo.stages; ++j) {
+            MPI_Sendrecv(remotes.data(), cfg.particlesPerProcess, mpiType, topo.right, kFwdTag, nextRemotes.data(), cfg.particlesPerProcess, mpiType, 
+                topo.left, kFwdTag, MPI_COMM_WORLD, &status);
+            remotes.swap(nextRemotes);
+            evolve(locals.data(), remotes.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+        }
+
+        int originOfHeld = (topo.rank - topo.stages + topo.size) % topo.size;
+        int holderOfMine = (topo.rank + topo.stages) % topo.size;
+        MPI_Sendrecv(remotes.data(), cfg.particlesPerProcess, mpiType, originOfHeld, kRetTag, returned.data(), cfg.particlesPerProcess, mpiType, 
+            holderOfMine, kRetTag, MPI_COMM_WORLD, &status);
+
+        merge(locals, returned);
+        evolve(locals.data(), locals.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+        updateProperties(locals);
+
+        if (cfg.printOutput && (i + 1) % 100 == 0) 
+            io::gatherAndWrite(locals, mpiType, MPI_COMM_WORLD, i + 1);
+    }
+
+    MPI_Type_free(&mpiType);
 
     return EXIT_SUCCESS;
 }
