@@ -18,6 +18,8 @@ add_executable(nBody
     src/main.cpp
     src/mpiUtils.cpp
     src/io.cpp
+    src/physics.cpp
+    src/init.cpp
 )
 
 target_include_directories(nBody PRIVATE include)
