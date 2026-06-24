@@ -24,6 +24,10 @@
 
 #include "mpiUtils.hpp"
 
+#include "init.hpp"
+#include "physics.hpp"
+#include "io.hpp"
+
 namespace {
 
 // Execution parameters according to the assignment:
@@ -203,18 +207,8 @@ int main(int argc, char** argv) {
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
-    // ----------------------------------------------------------------------
-    // TODO(Person B): initialize std::vector<Particle> locals with
-    //                 cfg.particlesPerProcess particles (init.hpp/cpp).
-    // TODO(Person A, Task 2): create MPI_Datatype mpi_particle_type, agreed
-    //                         with Person B on Particle's exact fields.
-    // TODO(Person A, Task 3/4 - real): replace the int buffers above with
-    //                 std::vector<Particle> and mpi_particle_type, and call
-    //                 evolve(locals, remotes, ...) at the marked points.
-    // TODO(Person B): merge() + evolve() + updateProperties() (steps f, g).
-    // TODO(Person A, Task 5): gather on rank 0 + file output
-    //                         every 100 iterations if cfg.printOutput.
-    // ----------------------------------------------------------------------
+    MPI_Datatype mpiType = mpiutils::registerParticleType();
+    std::vector<Particle> locals = cfg.fixedInit ? initFixed(cfg.particlesPerProcess, topo.rank) : initRandom(cfg.particlesPerProcess, topo.rank);
 
     return EXIT_SUCCESS;
 }
