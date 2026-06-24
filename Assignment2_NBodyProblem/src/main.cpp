@@ -235,7 +235,7 @@ int main(int argc, char** argv) {
             holderOfMine, kRetTag, MPI_COMM_WORLD, &status);
 
         merge(locals, returned);
-        evolve(locals.data(), locals.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+        //evolve(locals.data(), locals.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
         updateProperties(locals);
 
         if (cfg.printOutput && (i + 1) % 100 == 0) 
