@@ -24,6 +24,10 @@
 
 #include "mpiUtils.hpp"
 
+#include "init.hpp"
+#include "physics.hpp"
+#include "io.hpp"
+
 namespace {
 
 // Execution parameters according to the assignment:
@@ -203,18 +207,42 @@ int main(int argc, char** argv) {
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
-    // ----------------------------------------------------------------------
-    // TODO(Person B): initialize std::vector<Particle> locals with
-    //                 cfg.particlesPerProcess particles (init.hpp/cpp).
-    // TODO(Person A, Task 2): create MPI_Datatype mpi_particle_type, agreed
-    //                         with Person B on Particle's exact fields.
-    // TODO(Person A, Task 3/4 - real): replace the int buffers above with
-    //                 std::vector<Particle> and mpi_particle_type, and call
-    //                 evolve(locals, remotes, ...) at the marked points.
-    // TODO(Person B): merge() + evolve() + updateProperties() (steps f, g).
-    // TODO(Person A, Task 5): gather on rank 0 + file output
-    //                         every 100 iterations if cfg.printOutput.
-    // ----------------------------------------------------------------------
+    MPI_Datatype mpiType = mpiutils::registerParticleType();
+    std::vector<Particle> locals = cfg.fixedInit ? initFixed(cfg.particlesPerProcess, topo.rank) : initRandom(cfg.particlesPerProcess, topo.rank);
+    std::vector<Particle> remotes(cfg.particlesPerProcess); // guarda las particlas que llegan de otro proceso en cada etpa.
+    std::vector<Particle> nextRemotes(cfg.particlesPerProcess); // buffer temp. para el intercambio en cada rotación.
+    std::vector<Particle> returned(cfg.particlesPerProcess); // guarda las particulas que vuelven al paso de retorno.
+
+    constexpr int kFwdTag = 42;
+    constexpr int kRetTag = 43;
+    MPI_Status status;
+
+    for (int i = 0; i < cfg.iterations; ++i) {
+        MPI_Sendrecv(locals.data(),  cfg.particlesPerProcess, mpiType, topo.right, kFwdTag, remotes.data(), cfg.particlesPerProcess, mpiType, topo.left,  
+            kFwdTag, MPI_COMM_WORLD, &status);
+        evolve(locals.data(), remotes.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+
+        for (int j = 1; j < topo.stages; ++j) {
+            MPI_Sendrecv(remotes.data(), cfg.particlesPerProcess, mpiType, topo.right, kFwdTag, nextRemotes.data(), cfg.particlesPerProcess, mpiType, 
+                topo.left, kFwdTag, MPI_COMM_WORLD, &status);
+            remotes.swap(nextRemotes);
+            evolve(locals.data(), remotes.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+        }
+
+        int originOfHeld = (topo.rank - topo.stages + topo.size) % topo.size;
+        int holderOfMine = (topo.rank + topo.stages) % topo.size;
+        MPI_Sendrecv(remotes.data(), cfg.particlesPerProcess, mpiType, originOfHeld, kRetTag, returned.data(), cfg.particlesPerProcess, mpiType, 
+            holderOfMine, kRetTag, MPI_COMM_WORLD, &status);
+
+        merge(locals, returned);
+        //evolve(locals.data(), locals.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+        updateProperties(locals);
+
+        if (cfg.printOutput && (i + 1) % 100 == 0) 
+            io::gatherAndWrite(locals, mpiType, MPI_COMM_WORLD, i + 1);
+    }
+
+    MPI_Type_free(&mpiType);
 
     return EXIT_SUCCESS;
 }
