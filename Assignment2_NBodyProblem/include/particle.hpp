@@ -15,4 +15,8 @@ struct alignas(8) Particle {
     double vx, vy, vz;
     double fx, fy, fz;
     double mass;
+
+    Particle() : x(0), y(0), z(0), vx(0), vy(0), vz(0), fx(0), fy(0), fz(0), mass(0) {}
+    
+    Particle(double x, double y, double z, double mass) : x(x), y(y), z(z), vx(0), vy(0), vz(0), fx(0), fy(0), fz(0), mass(mass) {}
 };
