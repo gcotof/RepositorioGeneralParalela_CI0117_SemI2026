@@ -13,3 +13,14 @@ vector<Particle> initRandom(int n, int rank) {
     }
     return particles;
 }
+
+vector<Particle> initFixed(int n, int rank) {
+    vector<Particle> particles(n);
+    for (int i = 0; i < n; ++i) {
+        particles[i].x = rank * n + i + 1.0;
+        particles[i].y = rank * n + i + 1.0;
+        particles[i].z = rank * n + i + 1.0;
+        particles[i].mass = 4.0;
+    }
+    return particles;
+}
