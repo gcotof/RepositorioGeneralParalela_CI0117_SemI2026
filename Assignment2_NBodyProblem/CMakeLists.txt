@@ -23,5 +23,4 @@ add_executable(nBody
 )
 
 target_include_directories(nBody PRIVATE include)
-
 target_link_libraries(nBody PRIVATE MPI::MPI_CXX OpenMP::OpenMP_CXX)

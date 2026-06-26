@@ -6,7 +6,7 @@ Simulación de partículas N-Body usando un algoritmo de anillo MPI con paraleli
 
 ```
 Assignment2_NBodyProblem/
-├── CMakeLists.txt          # Compila binario "cenatMD"
+├── CMakeLists.txt          # Compila binario "nBody"
 ├── README.md               # Este archivo
 ├── validate.sh             # Job SLURM: validación numérica (np=9)
 ├── performance.sh          # Job SLURM: desempeño (np=15, 7000 iter)
@@ -42,12 +42,12 @@ make -j4
 cd ..
 ```
 
-El binario queda en `build/cenatMD`.
+El binario queda en `build/nBody`.
 
 ## Argumentos del programa
 
 ```
-mpiexec -np P ./build/cenatMD <N> <ITERATIONS> <PRINT_FLAG> <INIT_MODE>
+mpiexec -np P ./build/nBody <N> <ITERATIONS> <PRINT_FLAG> <INIT_MODE>
 ```
 
 | Argumento    | Descripción |
@@ -61,7 +61,7 @@ mpiexec -np P ./build/cenatMD <N> <ITERATIONS> <PRINT_FLAG> <INIT_MODE>
 
 ### Validación numérica
 ```bash
-mpiexec -np 9 ./build/cenatMD 100 100 1 1
+mpiexec -np 9 ./build/nBody 100 100 1 1
 python3 compareFiles/compare.py \
     compareFiles/reference/particles_100.csv \
     output/particles_100.csv
@@ -69,12 +69,12 @@ python3 compareFiles/compare.py \
 
 ### Desempeño
 ```bash
-mpiexec -np 15 ./build/cenatMD 200 7000 0 0
+mpiexec -np 15 ./build/nBody 200 7000 0 0
 ```
 
 ### Dataset para Paraview (colisión de galaxias)
 ```bash
-mpiexec -np 9 ./build/cenatMD 200 1000 1 2
+mpiexec -np 9 ./build/nBody 200 1000 1 2
 # Genera output/particles_100.csv ... particles_1000.csv
 # Ver compareFiles/paraview_guide.md para el paso a paso
 ```
