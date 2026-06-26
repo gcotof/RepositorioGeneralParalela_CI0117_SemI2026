@@ -1,7 +1,12 @@
 #pragma once
 #include "particle.hpp"
 #include <vector>
-using namespace std;
 
-vector<Particle> initRandom(int n, int rank);
-vector<Particle> initFixed(int n, int rank);
+// Uniform random initialization
+std::vector<Particle> initRandom(int n, int rank);
+
+// Fixed grid positions (for validation)
+std::vector<Particle> initFixed(int n, int rank);
+
+// Two colliding galaxy disks (creative Paraview dataset)
+std::vector<Particle> initGalaxy(int n, int rank, int totalRanks);

@@ -1,156 +1,54 @@
 // ---------------------------------------------------------------------------
 // main.cpp
 //
-// Responsibility of Person A.
-// Program entry point. For now (Task 1), this file:
-//   1. Parses the command-line arguments required by the assignment.
-//   2. Initializes MPI through mpiutils::MpiEnvironment (RAII).
-//   3. Computes and verifies the logical ring topology.
+// Entry point. Implements:
+//   1. Argument parsing.
+//   2. MPI initialization (RAII via MpiEnvironment).
+//   3. Logical ring topology.
+//   4. Main MPI + OpenMP simulation loop.
+//   5. Timing measurement with MPI_Wtime().
 //
-// What it does NOT do yet (to be added in later tasks, marked with TODO):
-//   - Create the MPI_Datatype for Particle (Task 2).
-//   - Implement the ring rotation loop (Task 3).
-//   - Implement the particle return step (Task 4).
-//   - Gather results on rank 0 and write output files (Task 5).
-//   - Particle initialization, evolve, merge, updateProperties
-//     (responsibility of Person B).
+// Arguments: <N> <ITERATIONS> <PRINT_FLAG> <INIT_MODE>
+//   INIT_MODE: 0 = random, 1 = fixed (validation), 2 = galaxy (Paraview)
 // ---------------------------------------------------------------------------
 
 #include <mpi.h>
-
 #include <cstdlib>
 #include <iostream>
 #include <vector>
 
 #include "mpiUtils.hpp"
-
 #include "init.hpp"
 #include "physics.hpp"
 #include "io.hpp"
 
 namespace {
 
-// Execution parameters according to the assignment:
-//   mpiexec -np <#Ranks> ./cenatMD <N> <ITERATIONS> <PRINT_FLAG> <INIT_FLAG>
 struct SimulationConfig {
-    int  particlesPerProcess = 0;      // N: particles per processor
-    int  iterations          = 0;      // ITERATIONS
-    bool printOutput         = false;  // PRINT_FLAG: 1 = write every 100 iterations
-    bool fixedInit           = false;  // INIT_FLAG: 1 = fixed positions
+    int  particlesPerProcess = 0;
+    int  iterations          = 0;
+    bool printOutput         = false;
+    int  initMode            = 0;   // 0=random, 1=fixed, 2=galaxy
 };
 
-// ---------------------------------------------------------------------------
-// Task 3 + 4 + 7: ring rotation loop, return step, and communication test.
-//
-// This validates the FULL communication pattern described in steps 1-5 of
-// the assignment's algorithm, using plain `int` payloads as a stand-in for
-// `std::vector<Particle>`. It intentionally does NOT depend on Person B's
-// Particle class, so it can be implemented and tested right now.
-//
-// Algorithm recap (see EnunciadoProyectoParalela.md):
-//   1. Send own data to the right neighbor.                      (initial)
-//   2. Receive from the left neighbor -> "remotes".               (evolve goes here)
-//   3. Send "remotes" to the right neighbor.                      (forward hop)
-//   4. Repeat steps 2-3 a total of (p-1)/2 = stages times.
-//   5. After the loop, instead of forwarding again, send the
-//      currently-held remotes DIRECTLY BACK to whichever rank
-//      originally owned them, and receive back this rank's own
-//      original data from whoever is holding it.
-//
-// Once Task 2 (MPI_Datatype for Particle) and Person B's evolve() are
-// ready, this becomes the real loop: replace `int` with `Particle`,
-// MPI_INT with mpi_particle_type, and insert the evolve()/merge() calls
-// at the marked points.
-// ---------------------------------------------------------------------------
-bool runRingCommunicationTest(const mpiutils::RingTopology& topo, int n) {
-    constexpr int kForwardTag = 42;
-    constexpr int kReturnTag  = 43;
-
-    // Trivial case: a single process has no neighbors to exchange with.
-    if (topo.size == 1) {
-        std::cout << "[rank 0] Ring test skipped (size=1, nothing to rotate).\n";
-        return true;
-    }
-
-    // Dummy "particles": unique IDs that encode their owner rank, so we can
-    // verify at the end that every value returns to its rightful owner.
-    std::vector<int> locals(n);
-    for (int i = 0; i < n; ++i) {
-        locals[i] = topo.rank * 100000 + i;
-    }
-
-    std::vector<int> remotes(n);
-
-    MPI_Status status;
-
-    // --- Step 1 + first receive (step 2 of stage 1) ---
-    // TODO(Person B): the data received here is where evolve(locals, remotes,
-    //                  n, n) must be called once Particle/evolve() exist.
-    MPI_Sendrecv(locals.data(), n, MPI_INT, topo.right, kForwardTag,
-                 remotes.data(), n, MPI_INT, topo.left, kForwardTag,
-                 MPI_COMM_WORLD, &status);
-
-    // --- Remaining forward hops (steps 2-3 repeated) ---
-    // The initial Sendrecv above already counted as 1 hop, so this loop
-    // performs the remaining (stages - 1) hops, for a total of `stages`.
-    std::vector<int> nextRemotes(n);
-    for (int stage = 1; stage < topo.stages; ++stage) {
-        // TODO(Person B): evolve(locals, remotes, n, n) goes here too,
-        //                 before forwarding remotes onward.
-        MPI_Sendrecv(remotes.data(), n, MPI_INT, topo.right, kForwardTag,
-                     nextRemotes.data(), n, MPI_INT, topo.left, kForwardTag,
-                     MPI_COMM_WORLD, &status);
-        remotes.swap(nextRemotes);
-    }
-
-    // --- Step 5: return step ---
-    // After `stages` forward hops, the data we are holding in `remotes`
-    // originated `stages` ranks to our left. We send it directly back to
-    // that owner, and symmetrically receive our OWN original data back
-    // from whichever rank is `stages` hops to our right.
-    int originOfHeldData = (topo.rank - topo.stages + topo.size) % topo.size;
-    int holderOfOwnData  = (topo.rank + topo.stages) % topo.size;
-
-    std::vector<int> returned(n);
-    MPI_Sendrecv(remotes.data(), n, MPI_INT, originOfHeldData, kReturnTag,
-                 returned.data(), n, MPI_INT, holderOfOwnData, kReturnTag,
-                 MPI_COMM_WORLD, &status);
-
-    // --- Verification: did we get back exactly what we sent out? ---
-    bool ok = (returned == locals);
-
-    std::cout << "[rank " << topo.rank << "] ring test: "
-              << (ok ? "PASS" : "FAIL")
-              << " (originOfHeldData=" << originOfHeldData
-              << ", holderOfOwnData=" << holderOfOwnData << ")\n";
-
-    if (!ok) {
-        std::cout << "[rank " << topo.rank << "] expected[0]=" << locals[0]
-                   << " got[0]=" << returned[0] << '\n';
-    }
-
-    return ok;
+void printUsage(const char* prog) {
+    std::cerr
+        << "Uso: mpiexec -np P " << prog
+        << " <N> <ITERATIONS> <PRINT_FLAG> <INIT_MODE>\n"
+        << "  N          : partículas por proceso (entero positivo)\n"
+        << "  ITERATIONS : pasos de simulación\n"
+        << "  PRINT_FLAG : 1 = escribir CSV cada 100 iter, 0 = no\n"
+        << "  INIT_MODE  : 0 = aleatoria, 1 = fija (validación), "
+           "2 = galaxia (Paraview)\n"
+        << "Ejemplos:\n"
+        << "  mpiexec -np 9  ./cenatMD 100 100  1 1   # validación\n"
+        << "  mpiexec -np 15 ./cenatMD 200 7000 0 0   # desempeño\n"
+        << "  mpiexec -np 9  ./cenatMD 200 1000 1 2   # galaxia Paraview\n";
 }
 
-void printUsage(const char* programName) {
-    std::cerr << "Usage: " << programName
-              << " <N> <ITERATIONS> <PRINT_FLAG> <INIT_FLAG>\n"
-              << "  N           : particles per processor (positive integer)\n"
-              << "  ITERATIONS  : number of iterations to execute (positive integer)\n"
-              << "  PRINT_FLAG  : 1 = write files every 100 iterations, 0 = no\n"
-              << "  INIT_FLAG   : 1 = fixed positions (validation), 0 = random\n"
-              << "Example (validation): mpiexec -np 8 ./cenatMD 100 100 1 1\n"
-              << "Example (performance): mpiexec -np 16 ./cenatMD 200 7000 0 0\n";
-}
-
-// Parses argv. If the arguments are invalid, rank 0 prints the usage
-// information and the entire execution is aborted via MPI_Abort (there is
-// no reasonable default value for a misconfigured simulation run).
 SimulationConfig parseArgsOrAbort(int argc, char** argv, int rank) {
     if (argc != 5) {
-        if (rank == 0) {
-            printUsage(argv[0]);
-        }
+        if (rank == 0) printUsage(argv[0]);
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
@@ -158,91 +56,131 @@ SimulationConfig parseArgsOrAbort(int argc, char** argv, int rank) {
     cfg.particlesPerProcess = std::atoi(argv[1]);
     cfg.iterations          = std::atoi(argv[2]);
     cfg.printOutput         = std::atoi(argv[3]) != 0;
-    cfg.fixedInit           = std::atoi(argv[4]) != 0;
+    cfg.initMode            = std::atoi(argv[4]);
 
     if (cfg.particlesPerProcess <= 0 || cfg.iterations <= 0) {
         if (rank == 0) {
-            std::cerr << "[main] ERROR: N and ITERATIONS must be positive integers.\n";
+            std::cerr << "[main] ERROR: N e ITERATIONS deben ser enteros positivos.\n";
             printUsage(argv[0]);
         }
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
-
+    if (cfg.initMode < 0 || cfg.initMode > 2) {
+        if (rank == 0) {
+            std::cerr << "[main] ERROR: INIT_MODE debe ser 0, 1 o 2.\n";
+            printUsage(argv[0]);
+        }
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    }
     return cfg;
 }
 
 } // namespace
 
 int main(int argc, char** argv) {
-    // RAII: guarantees MPI_Finalize even if parseArgsOrAbort performs an
-    // MPI_Abort below, or if future tasks introduce early returns due to
-    // additional validation errors.
     mpiutils::MpiEnvironment mpiEnv(argc, argv);
-
-    mpiutils::RingTopology topo = mpiutils::buildRingTopology();
-    SimulationConfig cfg = parseArgsOrAbort(argc, argv, topo.rank);
-
-    // --- Topology verification (Task 7: communication tests) ---
-    // Each process prints its own view of the ring. This helps visually
-    // confirm that left/right are correct before connecting the actual
-    // rotation logic in Task 3.
-    std::cout << "[rank " << topo.rank << "/" << topo.size << "] "
-              << "left=" << topo.left << " right=" << topo.right
-              << " stages=" << topo.stages << '\n';
+    mpiutils::RingTopology   topo = mpiutils::buildRingTopology();
+    SimulationConfig         cfg  = parseArgsOrAbort(argc, argv, topo.rank);
 
     if (topo.rank == 0) {
-        std::cout << "[rank 0] Configuration: N=" << cfg.particlesPerProcess
-                  << " iterations=" << cfg.iterations
-                  << " print=" << cfg.printOutput
-                  << " fixed_init=" << cfg.fixedInit << '\n';
+        const char* modes[] = {"random", "fixed", "galaxy"};
+        std::cout << "[rank 0] N=" << cfg.particlesPerProcess
+                  << " iter="      << cfg.iterations
+                  << " print="     << cfg.printOutput
+                  << " mode="      << modes[cfg.initMode]
+                  << " P="         << topo.size
+                  << " stages="    << topo.stages << '\n';
+        std::cout.flush();
     }
 
-    // ----------------------------------------------------------------------
-    // Task 3 + 4 + 7: validate the ring rotation + return step with dummy
-    // payloads, before Particle/evolve() (Person B) are wired in.
-    // ----------------------------------------------------------------------
-    bool ringOk = runRingCommunicationTest(topo, cfg.particlesPerProcess);
-    if (!ringOk) {
-        std::cerr << "[rank " << topo.rank << "] Ring communication test FAILED.\n";
-        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    // Create output directory
+    if (topo.rank == 0) {
+        system("mkdir -p output");
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Datatype mpiType = mpiutils::registerParticleType();
-    std::vector<Particle> locals = cfg.fixedInit ? initFixed(cfg.particlesPerProcess, topo.rank) : initRandom(cfg.particlesPerProcess, topo.rank);
-    std::vector<Particle> remotes(cfg.particlesPerProcess); // guarda las particlas que llegan de otro proceso en cada etpa.
-    std::vector<Particle> nextRemotes(cfg.particlesPerProcess); // buffer temp. para el intercambio en cada rotación.
-    std::vector<Particle> returned(cfg.particlesPerProcess); // guarda las particulas que vuelven al paso de retorno.
+
+    // Initialization based on mode
+    std::vector<Particle> locals;
+    switch (cfg.initMode) {
+        case 1:  locals = initFixed(cfg.particlesPerProcess, topo.rank);  break;
+        case 2:  locals = initGalaxy(cfg.particlesPerProcess, topo.rank, topo.size); break;
+        default: locals = initRandom(cfg.particlesPerProcess, topo.rank); break;
+    }
+
+    std::vector<Particle> remotes(cfg.particlesPerProcess);
+    std::vector<Particle> nextRemotes(cfg.particlesPerProcess);
+    std::vector<Particle> returned(cfg.particlesPerProcess);
 
     constexpr int kFwdTag = 42;
     constexpr int kRetTag = 43;
-    MPI_Status status;
+    MPI_Status    status;
 
-    for (int i = 0; i < cfg.iterations; ++i) {
-        MPI_Sendrecv(locals.data(),  cfg.particlesPerProcess, mpiType, topo.right, kFwdTag, remotes.data(), cfg.particlesPerProcess, mpiType, topo.left,  
-            kFwdTag, MPI_COMM_WORLD, &status);
-        evolve(locals.data(), remotes.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+    // -----------------------------------------------------------------------
+    // Bucle principal
+    // -----------------------------------------------------------------------
+    MPI_Barrier(MPI_COMM_WORLD);
+    double tStart = MPI_Wtime();
 
-        for (int j = 1; j < topo.stages; ++j) {
-            MPI_Sendrecv(remotes.data(), cfg.particlesPerProcess, mpiType, topo.right, kFwdTag, nextRemotes.data(), cfg.particlesPerProcess, mpiType, 
-                topo.left, kFwdTag, MPI_COMM_WORLD, &status);
+    for (int iter = 0; iter < cfg.iterations; ++iter) {
+
+        // Step 1+2: send locals to the right, receive remotes from the left
+        MPI_Sendrecv(
+            locals.data(),  cfg.particlesPerProcess, mpiType, topo.right, kFwdTag,
+            remotes.data(), cfg.particlesPerProcess, mpiType, topo.left,  kFwdTag,
+            MPI_COMM_WORLD, &status);
+
+        evolve(locals.data(), remotes.data(),
+               cfg.particlesPerProcess, cfg.particlesPerProcess);
+
+        // Steps 3+4: remaining ring rotations
+        for (int stage = 1; stage < topo.stages; ++stage) {
+            MPI_Sendrecv(
+                remotes.data(),     cfg.particlesPerProcess, mpiType, topo.right, kFwdTag,
+                nextRemotes.data(), cfg.particlesPerProcess, mpiType, topo.left,  kFwdTag,
+                MPI_COMM_WORLD, &status);
             remotes.swap(nextRemotes);
-            evolve(locals.data(), remotes.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+            evolve(locals.data(), remotes.data(),
+                   cfg.particlesPerProcess, cfg.particlesPerProcess);
         }
 
+        // Step 5: return remotes to their owner process
         int originOfHeld = (topo.rank - topo.stages + topo.size) % topo.size;
         int holderOfMine = (topo.rank + topo.stages) % topo.size;
-        MPI_Sendrecv(remotes.data(), cfg.particlesPerProcess, mpiType, originOfHeld, kRetTag, returned.data(), cfg.particlesPerProcess, mpiType, 
-            holderOfMine, kRetTag, MPI_COMM_WORLD, &status);
+        MPI_Sendrecv(
+            remotes.data(),  cfg.particlesPerProcess, mpiType, originOfHeld, kRetTag,
+            returned.data(), cfg.particlesPerProcess, mpiType, holderOfMine, kRetTag,
+            MPI_COMM_WORLD, &status);
 
+        // Step 6: merge remote forces + local self-interaction
         merge(locals, returned);
-        //evolve(locals.data(), locals.data(), cfg.particlesPerProcess, cfg.particlesPerProcess);
+        evolveSelf(locals.data(), cfg.particlesPerProcess);
+
+        // Step 7: Euler integration, reset forces
         updateProperties(locals);
 
-        if (cfg.printOutput && (i + 1) % 100 == 0) 
-            io::gatherAndWrite(locals, mpiType, MPI_COMM_WORLD, i + 1);
+        // Step 8: output every 100 iterations
+        if (cfg.printOutput && (iter + 1) % 100 == 0) {
+            io::gatherAndWrite(locals, mpiType, MPI_COMM_WORLD, iter + 1, "output");
+        }
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double tEnd = MPI_Wtime();
+
+    double localElapsed = tEnd - tStart;
+    double maxElapsed   = 0.0;
+    MPI_Reduce(&localElapsed, &maxElapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+    if (topo.rank == 0) {
+        std::cout << "[timing] iter="     << cfg.iterations
+                  << "  P="              << topo.size
+                  << "  N/proc="         << cfg.particlesPerProcess
+                  << "  total="          << maxElapsed   << " s"
+                  << "  por_iter="       << maxElapsed / cfg.iterations << " s\n";
     }
 
     MPI_Type_free(&mpiType);
-
     return EXIT_SUCCESS;
 }

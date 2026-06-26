@@ -1,7 +1,5 @@
 // ---------------------------------------------------------------------------
-// io.cpp
-//
-// Responsibility of Person A.
+// io.cpp — Escritura de archivos de salida para Paraview
 // ---------------------------------------------------------------------------
 
 #include "io.hpp"
@@ -13,12 +11,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 namespace io {
 
-// ---------------------------------------------------------------------------
-// gatherAndWrite
-// ---------------------------------------------------------------------------
 void gatherAndWrite(const std::vector<Particle>& locals,
                     MPI_Datatype                  mpiType,
                     MPI_Comm                      comm,
@@ -28,11 +24,8 @@ void gatherAndWrite(const std::vector<Particle>& locals,
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 
-    // Each process reports how many particles it holds.
     int localCount = static_cast<int>(locals.size());
 
-    // rank 0 collects everyone's count to build the displacement table
-    // needed by MPI_Gatherv (handles unequal partition sizes).
     std::vector<int> counts;
     std::vector<int> displs;
 
@@ -61,19 +54,21 @@ void gatherAndWrite(const std::vector<Particle>& locals,
                 allParticles.data(), counts.data(), displs.data(), mpiType,
                 0, comm);
 
-    // Only rank 0 writes the file.
     if (rank != 0) return;
+
+    // Ensure the directory exists
+    mkdir(outputDir.c_str(), 0755);
 
     const std::string filename =
         outputDir + "/particles_" + std::to_string(iteration) + ".csv";
 
     std::ofstream out(filename);
     if (!out) {
-        std::cerr << "[io] ERROR: cannot open \"" << filename << "\" for writing.\n";
+        std::cerr << "[io] ERROR: cannot write \"" << filename << "\"\n";
         return;
     }
 
-    // CSV header — Paraview reads this with the "CSV Reader" filter.
+    // Header compatible with Paraview CSV Reader
     out << "x,y,z,vx,vy,vz,fx,fy,fz,mass\n";
     out << std::fixed << std::setprecision(6);
 
@@ -84,8 +79,9 @@ void gatherAndWrite(const std::vector<Particle>& locals,
             << p.mass << '\n';
     }
 
-    std::cout << "[io] wrote " << totalParticles
-              << " particles to \"" << filename << "\"\n";
+    std::cout << "[io] iter=" << iteration
+              << " -> " << filename
+              << " (" << totalParticles << " particulas)\n";
 }
 
 } // namespace io
