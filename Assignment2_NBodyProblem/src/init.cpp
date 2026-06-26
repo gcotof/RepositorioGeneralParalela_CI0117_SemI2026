@@ -85,7 +85,7 @@ std::vector<Particle> initFixed(int n, int rank, int totalRanks) {
 // Orbital speeds proportional to sqrt(1/r) for initial stability.
 // ---------------------------------------------------------------------------
 std::vector<Particle> initGalaxy(int n, int rank, int totalRanks) {
-    const int totalParticles = n * totalRanks;
+    /*const int totalParticles = n * totalRanks;
 
     // Partition: first half → galaxy A, second half → galaxy B
     const int halfTotal = totalParticles / 2;
@@ -105,7 +105,7 @@ std::vector<Particle> initGalaxy(int n, int rank, int totalRanks) {
         bool  isGalaxyA = (globalIdx < halfTotal);
 
         double cx = isGalaxyA ? -20.0 : 20.0;   // galaxy X center
-        double vz =  isGalaxyA ? 0.5  : -0.5;   // approach velocity
+        double vz =  isGalaxyA ? 8.0  : -8.0;   // approach velocity
 
         double angle  = angleDist(rng);
         double radius = radiusDist(rng);
@@ -125,6 +125,34 @@ std::vector<Particle> initGalaxy(int n, int rank, int totalRanks) {
         p.vy   = vy;
         p.vz   = vz;
         p.fx   = 0.0;  p.fy = 0.0;  p.fz = 0.0;
+        p.mass = massDist(rng);
+        pts.push_back(p);
+    }
+    return pts;
+    */
+   std::mt19937 rng(1234 + rank * 7);
+    std::uniform_real_distribution<double> angleDist(0.0, 2.0 * M_PI);
+    std::uniform_real_distribution<double> thetaDist(0.0, M_PI);
+    std::uniform_real_distribution<double> radiusDist(5.0, 20.0);
+    std::uniform_real_distribution<double> massDist(0.8, 1.2);
+
+    std::vector<Particle> pts;
+    pts.reserve(n);
+
+    for (int i = 0; i < n; ++i) {
+        double phi    = angleDist(rng);
+        double theta  = thetaDist(rng);
+        double radius = radiusDist(rng);
+
+        Particle p;
+        p.x    = radius * std::sin(theta) * std::cos(phi);
+        p.y    = radius * std::sin(theta) * std::sin(phi);
+        p.z    = radius * std::cos(theta);
+        // Velocidad hacia el centro (colapso)
+        p.vx = -2.0 * p.x / radius;
+        p.vy = -2.0 * p.y / radius;
+        p.vz = -2.0 * p.z / radius;
+        p.fx   = 0.0; p.fy = 0.0; p.fz = 0.0;
         p.mass = massDist(rng);
         pts.push_back(p);
     }

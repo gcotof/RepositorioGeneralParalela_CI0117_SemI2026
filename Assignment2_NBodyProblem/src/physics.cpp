@@ -21,8 +21,8 @@
 
 static const double A       = 2.0;
 static const double B       = 1.0;
-static const double dt      = 0.001;  // small timestep for numerical stability
-static const double EPSILON = 0.01;   // softening factor to prevent r->0 blowup
+static const double dt      = 0.01;  // small timestep for numerical stability
+static const double EPSILON = 0.5;   // softening factor to prevent r->0 blowup
 
 // ---------------------------------------------------------------------------
 // evolve: forces between locals[i] and remotes[j] (distinct sets)
