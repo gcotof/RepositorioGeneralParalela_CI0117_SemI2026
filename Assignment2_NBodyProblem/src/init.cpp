@@ -44,12 +44,19 @@ std::vector<Particle> initRandom(int n, int rank) {
 // ---------------------------------------------------------------------------
 // initFixed — regular grid, zero velocities
 // ---------------------------------------------------------------------------
-std::vector<Particle> initFixed(int n, int rank) {
+std::vector<Particle> initFixed(int n, int rank, int totalRanks) {
     std::vector<Particle> pts;
     pts.reserve(n);
 
     int offset = rank * n;
-    int gridSide = static_cast<int>(std::ceil(std::cbrt(static_cast<double>(offset + n))));
+    // gridSide must be the same on every rank: base it on the GLOBAL
+    // particle count (n * totalRanks), not on this rank's local offset.
+    // Using offset+n here made each rank compute a different gridSide,
+    // which scrambled the (gx,gy,gz) mapping and made particles from
+    // different ranks land on identical coordinates (zero-distance
+    // collisions -> force blowup).
+    int totalParticles = n * totalRanks;
+    int gridSide = static_cast<int>(std::ceil(std::cbrt(static_cast<double>(totalParticles))));
     double spacing = 2.0;
 
     for (int i = 0; i < n; ++i) {

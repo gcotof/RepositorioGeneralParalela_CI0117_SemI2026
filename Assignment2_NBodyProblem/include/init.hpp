@@ -6,7 +6,7 @@
 std::vector<Particle> initRandom(int n, int rank);
 
 // Fixed grid positions (for validation)
-std::vector<Particle> initFixed(int n, int rank);
+std::vector<Particle> initFixed(int n, int rank, int totalRanks);
 
 // Two colliding galaxy disks (creative Paraview dataset)
 std::vector<Particle> initGalaxy(int n, int rank, int totalRanks);

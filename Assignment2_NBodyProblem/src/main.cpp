@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
     // Initialization based on mode
     std::vector<Particle> locals;
     switch (cfg.initMode) {
-        case 1:  locals = initFixed(cfg.particlesPerProcess, topo.rank);  break;
+        case 1:  locals = initFixed(cfg.particlesPerProcess, topo.rank, topo.size);  break;
         case 2:  locals = initGalaxy(cfg.particlesPerProcess, topo.rank, topo.size); break;
         default: locals = initRandom(cfg.particlesPerProcess, topo.rank); break;
     }
