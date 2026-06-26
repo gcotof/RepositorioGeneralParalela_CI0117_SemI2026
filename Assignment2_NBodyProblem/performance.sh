@@ -1,18 +1,21 @@
 #!/bin/bash
-#SBATCH --job-name=cenatMD_perf
+#SBATCH --job-name=nBody_perf
 #SBATCH --partition=nukwa-wide
 #SBATCH --nodes=1
+#SBATCH --ntasks=15
 #SBATCH --cpus-per-task=1
 #SBATCH --time=02:00:00
 #SBATCH --output=logs/perf_%j.out
 #SBATCH --error=logs/perf_%j.err
 
 # ---------------------------------------------------------------------------
-# performance.sh — Job de desempeño y escalabilidad en Kabré
+# performance.sh — Performance and scalability job on Kabré
 #
-# Corre la simulación principal y opcionalmente un barrido de escalabilidad.
-# Uso: sbatch performance.sh   (desde la raíz del proyecto en Kabré)
+# Runs the main simulation and optionally a scalability sweep.
+# Usage: sbatch performance.sh   (from the project root on Kabré)
 # ---------------------------------------------------------------------------
+
+cd $SLURM_SUBMIT_DIR
 
 module load gcc/13.4.0
 module load openmpi/4.1.6-pmi2
@@ -22,13 +25,13 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 mkdir -p logs
 
 echo "============================================"
-echo "Job de desempeño: $(date)"
-echo "Nodos: $SLURM_NNODES  |  Procesos: $SLURM_NTASKS  |  Hilos/proc: $OMP_NUM_THREADS"
+echo "Performance job: $(date)"
+echo "Nodes: $SLURM_NNODES  |  Tasks: $SLURM_NTASKS  |  Threads/task: $OMP_NUM_THREADS"
 echo "============================================"
 
-# Compilar si el binario no existe
-if [ ! -f "build/cenatMD" ]; then
-    echo "Compilando..."
+# Compile if binary does not exist
+if [ ! -f "build/nBody" ]; then
+    echo "Compiling..."
     mkdir -p build
     cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -36,32 +39,32 @@ if [ ! -f "build/cenatMD" ]; then
     cd ..
 fi
 
-# Corrida principal de desempeño
+# Main performance run
 echo ""
-echo "--- Corrida principal (np=$SLURM_NTASKS, N=200, 7000 iter) ---"
-srun build/cenatMD 200 7000 0 0
+echo "--- Main run (np=15, N=200, 7000 iter) ---"
+srun --ntasks=15 build/nBody 200 7000 0 0
 
 # ---------------------------------------------------------------------------
-# Barrido de escalabilidad (descomentá para medir speedup)
+# Scalability sweep (uncomment to measure speedup)
 #
-# Requiere --ntasks igual al mayor valor de la lista (15 en este caso).
-# Genera un CSV con tiempos por cantidad de procesos.
+# Requires --ntasks equal to the largest value in the list (15 here).
+# Produces a CSV with time per process count.
 # ---------------------------------------------------------------------------
 # RESULTS=logs/speedup_${SLURM_JOB_ID}.csv
-# echo "np,segundos" > "$RESULTS"
+# echo "np,seconds" > "$RESULTS"
 # echo ""
-# echo "--- Barrido de escalabilidad ---"
+# echo "--- Scalability sweep ---"
 # for NP in 1 3 5 7 9 11 13 15; do
 #     echo -n "np=$NP ... "
 #     START=$(date +%s%N)
-#     srun -n $NP build/cenatMD 200 7000 0 0 > /dev/null 2>&1
+#     srun --ntasks=$NP build/nBody 200 7000 0 0 > /dev/null 2>&1
 #     END=$(date +%s%N)
 #     ELAPSED=$(echo "scale=3; ($END - $START) / 1000000000" | bc)
 #     echo "${ELAPSED}s"
 #     echo "$NP,$ELAPSED" >> "$RESULTS"
 # done
 # echo ""
-# echo "Resultados de escalabilidad en: $RESULTS"
+# echo "Scalability results saved to: $RESULTS"
 
 echo ""
-echo "Fin: $(date)"
+echo "Done: $(date)"
