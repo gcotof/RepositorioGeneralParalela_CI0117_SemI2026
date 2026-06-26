@@ -32,15 +32,6 @@ echo "Submit dir: $SLURM_SUBMIT_DIR"
 echo "Nodes: $SLURM_NNODES  |  Tasks: $SLURM_NTASKS  |  Threads/task: $OMP_NUM_THREADS"
 echo "============================================"
 
-# Compile if binary does not exist
-# Use absolute paths so cmake subprocesses always find the source tree
-if [ ! -f "$SLURM_SUBMIT_DIR/build/nBody" ]; then
-    echo "Compiling..."
-    mkdir -p "$SLURM_SUBMIT_DIR/build"
-    cmake -S "$SLURM_SUBMIT_DIR" -B "$SLURM_SUBMIT_DIR/build" -DCMAKE_BUILD_TYPE=Release
-    cmake --build "$SLURM_SUBMIT_DIR/build" -j4
-fi
-
 # Main performance run
 echo ""
 echo "--- Main run (np=15, N=200, 7000 iter) ---"

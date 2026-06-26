@@ -34,16 +34,6 @@ if [ ! -f "$SLURM_SUBMIT_DIR/build/nBody" ]; then
     cmake --build "$SLURM_SUBMIT_DIR/build" -j4
 fi
 
-# Generate reference if it does not exist
-if [ ! -f "$SLURM_SUBMIT_DIR/compareFiles/reference/particles_100.csv" ]; then
-    echo "Generating reference..."
-    srun --ntasks=9 "$SLURM_SUBMIT_DIR/build/nBody" 100 100 1 1
-    cp "$SLURM_SUBMIT_DIR/output/particles_100.csv" \
-       "$SLURM_SUBMIT_DIR/compareFiles/reference/particles_100.csv"
-    echo "Reference saved."
-    rm -f "$SLURM_SUBMIT_DIR/output/particles_100.csv"
-fi
-
 # Validation run
 echo ""
 echo "--- Validation run (np=9, N=100, 100 iter, fixed init) ---"

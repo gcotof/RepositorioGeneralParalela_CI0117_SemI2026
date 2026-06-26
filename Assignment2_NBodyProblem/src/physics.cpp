@@ -19,12 +19,13 @@
 #include "physics.hpp"
 #include <cmath>
 
-static const double A  = 2.0;
-static const double B  = 1.0;
-static const double dt = 0.1;
+static const double A       = 2.0;
+static const double B       = 1.0;
+static const double dt      = 0.001;  // small timestep for numerical stability
+static const double EPSILON = 0.01;   // softening factor to prevent r->0 blowup
 
 // ---------------------------------------------------------------------------
-// evolve: fuerzas entre locals[i] y remotes[j] (conjuntos distintos)
+// evolve: forces between locals[i] and remotes[j] (distinct sets)
 // ---------------------------------------------------------------------------
 void evolve(Particle* locals, Particle* remotes, int nlocal, int nremote) {
     #pragma omp parallel for schedule(static)
@@ -33,8 +34,8 @@ void evolve(Particle* locals, Particle* remotes, int nlocal, int nremote) {
             double rx = locals[i].x - remotes[j].x;
             double ry = locals[i].y - remotes[j].y;
             double rz = locals[i].z - remotes[j].z;
-            double r2 = rx*rx + ry*ry + rz*rz;
-            if (r2 == 0.0) continue;   // safeguard (should not happen here)
+            // Softened distance squared: prevents blowup when particles are very close
+            double r2  = rx*rx + ry*ry + rz*rz + EPSILON*EPSILON;
             double r   = std::sqrt(r2);
             double r6  = r2 * r2 * r2;
             double r12 = r6 * r6;
@@ -60,8 +61,7 @@ void evolve(Particle* locals, Particle* remotes, int nlocal, int nremote) {
 
 // ---------------------------------------------------------------------------
 // evolveSelf: forces within the same local array (step 6 of algorithm).
-// Skips i==j (zero distance -> undefined) and iterates only the
-// upper triangle (i < j) to avoid duplicate calculation.
+// Iterates only the upper triangle (i < j) to avoid duplicate calculation.
 // ---------------------------------------------------------------------------
 void evolveSelf(Particle* particles, int n) {
     #pragma omp parallel for schedule(static)
@@ -70,8 +70,8 @@ void evolveSelf(Particle* particles, int n) {
             double rx = particles[i].x - particles[j].x;
             double ry = particles[i].y - particles[j].y;
             double rz = particles[i].z - particles[j].z;
-            double r2 = rx*rx + ry*ry + rz*rz;
-            if (r2 == 0.0) continue;
+            // Softened distance squared
+            double r2  = rx*rx + ry*ry + rz*rz + EPSILON*EPSILON;
             double r   = std::sqrt(r2);
             double r6  = r2 * r2 * r2;
             double r12 = r6 * r6;
