@@ -1,7 +1,13 @@
 // ---------------------------------------------------------------------------
-// io.cpp — Escritura de archivos de salida para Paraview
+// io.cpp
+//
+// Output file writing for the N-body simulation.
+//
+//   gatherAndWrite() — collects particles from all processes into rank 0
+//                      using MPI_Gatherv and writes a CSV file compatible
+//                      with the Paraview CSV reader.
+//                      Called every 100 iterations when PRINT_FLAG=1.
 // ---------------------------------------------------------------------------
-
 #include "io.hpp"
 
 #include <mpi.h>
