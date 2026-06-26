@@ -2,7 +2,6 @@
 #SBATCH --job-name=nbody_galaxy
 #SBATCH --partition=nukwa-wide
 #SBATCH --nodes=1
-#SBATCH --ntasks=9
 #SBATCH --cpus-per-task=2
 #SBATCH --time=01:00:00
 #SBATCH --output=logs/galaxy_%j.out

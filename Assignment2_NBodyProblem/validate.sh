@@ -2,7 +2,6 @@
 #SBATCH --job-name=nBody_validate
 #SBATCH --partition=nukwa-wide
 #SBATCH --nodes=1
-#SBATCH --ntasks=9
 #SBATCH --cpus-per-task=2
 #SBATCH --time=00:30:00
 #SBATCH --output=logs/validate_%j.out

@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=cenatMD_perf
-#SBATCH --partition=nukwa
-#SBATCH --ntasks=15
-#SBATCH --cpus-per-task=4
+#SBATCH --partition=nukwa-wide
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=1
 #SBATCH --time=02:00:00
 #SBATCH --output=logs/perf_%j.out
 #SBATCH --error=logs/perf_%j.err

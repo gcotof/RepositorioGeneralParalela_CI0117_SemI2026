@@ -1,0 +1,33 @@
+make: Atención: El archivo 'Makefile' tiene una hora de modificación 3,2 s en el futuro
+make[1]: Atención: El archivo 'CMakeFiles/Makefile2' tiene una hora de modificación 3,5 s en el futuro
+make[2]: Atención: El archivo 'CMakeFiles/nBody.dir/progress.make' tiene una hora de modificación 3,3 s en el futuro
+make[2]: atención: Se ha detectado una desviación en el reloj. La construcción podría estar incompleta.
+make[2]: Atención: El archivo 'CMakeFiles/nBody.dir/progress.make' tiene una hora de modificación 3,2 s en el futuro
+make[2]: atención: Se ha detectado una desviación en el reloj. La construcción podría estar incompleta.
+make[1]: atención: Se ha detectado una desviación en el reloj. La construcción podría estar incompleta.
+make: atención: Se ha detectado una desviación en el reloj. La construcción podría estar incompleta.
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+slurmstepd: error: execve(): build/cenatMD: No such file or directory
+srun: error: nukwa-02.cnca: tasks 0-23: Exited with exit code 2
