@@ -15,7 +15,8 @@
 # Usage: sbatch performance.sh   (from the project root on Kabré)
 # ---------------------------------------------------------------------------
 
-cd $SLURM_SUBMIT_DIR
+# Move to the directory where sbatch was called from
+cd "$SLURM_SUBMIT_DIR"
 
 module load gcc/13.4.0
 module load openmpi/4.1.6-pmi2
@@ -26,23 +27,24 @@ mkdir -p logs
 
 echo "============================================"
 echo "Performance job: $(date)"
+echo "Node: $SLURMD_NODENAME"
+echo "Submit dir: $SLURM_SUBMIT_DIR"
 echo "Nodes: $SLURM_NNODES  |  Tasks: $SLURM_NTASKS  |  Threads/task: $OMP_NUM_THREADS"
 echo "============================================"
 
 # Compile if binary does not exist
-if [ ! -f "build/nBody" ]; then
+# Use absolute paths so cmake subprocesses always find the source tree
+if [ ! -f "$SLURM_SUBMIT_DIR/build/nBody" ]; then
     echo "Compiling..."
-    mkdir -p build
-    cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Release
-    make -j4
-    cd ..
+    mkdir -p "$SLURM_SUBMIT_DIR/build"
+    cmake -S "$SLURM_SUBMIT_DIR" -B "$SLURM_SUBMIT_DIR/build" -DCMAKE_BUILD_TYPE=Release
+    cmake --build "$SLURM_SUBMIT_DIR/build" -j4
 fi
 
 # Main performance run
 echo ""
 echo "--- Main run (np=15, N=200, 7000 iter) ---"
-srun --ntasks=15 build/nBody 200 7000 0 0
+srun --ntasks=15 "$SLURM_SUBMIT_DIR/build/nBody" 200 7000 0 0
 
 # ---------------------------------------------------------------------------
 # Scalability sweep (uncomment to measure speedup)
@@ -50,14 +52,14 @@ srun --ntasks=15 build/nBody 200 7000 0 0
 # Requires --ntasks equal to the largest value in the list (15 here).
 # Produces a CSV with time per process count.
 # ---------------------------------------------------------------------------
-# RESULTS=logs/speedup_${SLURM_JOB_ID}.csv
+# RESULTS="$SLURM_SUBMIT_DIR/logs/speedup_${SLURM_JOB_ID}.csv"
 # echo "np,seconds" > "$RESULTS"
 # echo ""
 # echo "--- Scalability sweep ---"
 # for NP in 1 3 5 7 9 11 13 15; do
 #     echo -n "np=$NP ... "
 #     START=$(date +%s%N)
-#     srun --ntasks=$NP build/nBody 200 7000 0 0 > /dev/null 2>&1
+#     srun --ntasks=$NP "$SLURM_SUBMIT_DIR/build/nBody" 200 7000 0 0 > /dev/null 2>&1
 #     END=$(date +%s%N)
 #     ELAPSED=$(echo "scale=3; ($END - $START) / 1000000000" | bc)
 #     echo "${ELAPSED}s"

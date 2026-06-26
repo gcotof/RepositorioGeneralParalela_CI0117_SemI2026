@@ -8,7 +8,8 @@
 #SBATCH --output=logs/validate_%j.out
 #SBATCH --error=logs/validate_%j.err
 
-cd $SLURM_SUBMIT_DIR
+# Move to the directory where sbatch was called from
+cd "$SLURM_SUBMIT_DIR"
 
 module load gcc/13.4.0
 module load openmpi/4.1.6-pmi2
@@ -20,39 +21,40 @@ mkdir -p logs output compareFiles/reference
 echo "============================================"
 echo "Validation job: $(date)"
 echo "Node: $SLURMD_NODENAME"
+echo "Submit dir: $SLURM_SUBMIT_DIR"
 echo "Tasks: $SLURM_NTASKS  Threads/task: $OMP_NUM_THREADS"
 echo "============================================"
 
 # Compile if binary does not exist
-if [ ! -f "build/nBody" ]; then
+# Use absolute paths so cmake subprocesses always find the source tree
+if [ ! -f "$SLURM_SUBMIT_DIR/build/nBody" ]; then
     echo "Compiling..."
-    mkdir -p build && cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Release
-    make -j4
-    cd ..
+    mkdir -p "$SLURM_SUBMIT_DIR/build"
+    cmake -S "$SLURM_SUBMIT_DIR" -B "$SLURM_SUBMIT_DIR/build" -DCMAKE_BUILD_TYPE=Release
+    cmake --build "$SLURM_SUBMIT_DIR/build" -j4
 fi
 
 # Generate reference if it does not exist
-if [ ! -f "compareFiles/reference/particles_100.csv" ]; then
+if [ ! -f "$SLURM_SUBMIT_DIR/compareFiles/reference/particles_100.csv" ]; then
     echo "Generating reference..."
-    srun --ntasks=9 build/nBody 100 100 1 1
-    cp output/particles_100.csv compareFiles/reference/particles_100.csv
+    srun --ntasks=9 "$SLURM_SUBMIT_DIR/build/nBody" 100 100 1 1
+    cp "$SLURM_SUBMIT_DIR/output/particles_100.csv" \
+       "$SLURM_SUBMIT_DIR/compareFiles/reference/particles_100.csv"
     echo "Reference saved."
-    # Clean output before validation run
-    rm -f output/particles_100.csv
+    rm -f "$SLURM_SUBMIT_DIR/output/particles_100.csv"
 fi
 
 # Validation run
 echo ""
 echo "--- Validation run (np=9, N=100, 100 iter, fixed init) ---"
-srun --ntasks=9 build/nBody 100 100 1 1
+srun --ntasks=9 "$SLURM_SUBMIT_DIR/build/nBody" 100 100 1 1
 
 # Compare against reference
 echo ""
 echo "--- Comparing results ---"
-python3 compareFiles/compare.py \
-    compareFiles/reference/particles_100.csv \
-    output/particles_100.csv
+python3 "$SLURM_SUBMIT_DIR/compareFiles/compare.py" \
+    "$SLURM_SUBMIT_DIR/compareFiles/reference/particles_100.csv" \
+    "$SLURM_SUBMIT_DIR/output/particles_100.csv"
 
 echo ""
 echo "Done: $(date)"

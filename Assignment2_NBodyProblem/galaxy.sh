@@ -8,7 +8,8 @@
 #SBATCH --output=logs/galaxy_%j.out
 #SBATCH --error=logs/galaxy_%j.err
 
-cd $SLURM_SUBMIT_DIR
+# Move to the directory where sbatch was called from
+cd "$SLURM_SUBMIT_DIR"
 
 module load gcc/13.4.0
 module load openmpi/4.1.6-pmi2
@@ -20,24 +21,25 @@ mkdir -p logs output
 echo "============================================"
 echo "Galaxy job: $(date)"
 echo "Node: $SLURMD_NODENAME"
+echo "Submit dir: $SLURM_SUBMIT_DIR"
 echo "Tasks: $SLURM_NTASKS  Threads/task: $OMP_NUM_THREADS"
 echo "============================================"
 
 # Compile if binary does not exist
-if [ ! -f "build/nBody" ]; then
+# Use absolute paths so cmake subprocesses always find the source tree
+if [ ! -f "$SLURM_SUBMIT_DIR/build/nBody" ]; then
     echo "Compiling..."
-    mkdir -p build && cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Release
-    make -j4
-    cd ..
+    mkdir -p "$SLURM_SUBMIT_DIR/build"
+    cmake -S "$SLURM_SUBMIT_DIR" -B "$SLURM_SUBMIT_DIR/build" -DCMAKE_BUILD_TYPE=Release
+    cmake --build "$SLURM_SUBMIT_DIR/build" -j4
 fi
 
 # Generate galaxy collision dataset (1800 particles, 10 snapshots)
-srun --ntasks=9 build/nBody 200 1000 1 2
+srun --ntasks=9 "$SLURM_SUBMIT_DIR/build/nBody" 200 1000 1 2
 
 echo ""
 echo "Output files in output/:"
-ls -lh output/
+ls -lh "$SLURM_SUBMIT_DIR/output/"
 
 echo ""
 echo "=== To visualize in Paraview ==="
