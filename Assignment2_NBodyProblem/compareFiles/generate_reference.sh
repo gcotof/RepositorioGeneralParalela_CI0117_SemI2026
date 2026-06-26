@@ -1,6 +1,20 @@
 #!/bin/bash
+#SBATCH --job-name=nBody_genref
+#SBATCH --partition=nukwa-wide
+#SBATCH --nodes=1
+#SBATCH --ntasks=9
+#SBATCH --cpus-per-task=2
+#SBATCH --time=00:15:00
+#SBATCH --output=logs/genref_%j.out
+#SBATCH --error=logs/genref_%j.err
+
 # ---------------------------------------------------------------------------
 # generate_reference.sh — Generates the reference CSV used by compare.py.
+#
+# Submit with sbatch (like validate.sh, performance.sh, galaxy.sh) so it
+# gets a real SLURM allocation with 9 task slots. Running it directly with
+# mpiexec on a login node will fail with "not enough slots", since login
+# nodes are shared and don't hand out a 9-task allocation on their own.
 #
 # Builds the binary (if needed) and runs the same validation case used by
 # validate.sh (np=9, N=100, 100 iter, fixed init), then copies the result
@@ -11,25 +25,38 @@
 # the project's own binary, a bug in the simulation will silently poison
 # the "reference" it produces, defeating the whole point of validation.
 #
-# Usage (from the project root, on a login/compute node with MPI/OpenMP
-# available, or via `srun`/`sbatch` on Kabré):
-#   bash compareFiles/generate_reference.sh
+# Usage (from the project root, on Kabré):
+#   sbatch compareFiles/generate_reference.sh
 # ---------------------------------------------------------------------------
-set -euo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$PROJECT_ROOT"
+# Move to the directory where sbatch was called from
+cd "$SLURM_SUBMIT_DIR"
 
-mkdir -p build compareFiles/reference
+module load gcc/13.4.0
+module load openmpi/4.1.6-pmi2
 
-if [ ! -f "build/nBody" ]; then
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+
+mkdir -p logs build compareFiles/reference
+
+echo "============================================"
+echo "Generate-reference job: $(date)"
+echo "Node: $SLURMD_NODENAME"
+echo "Submit dir: $SLURM_SUBMIT_DIR"
+echo "Tasks: $SLURM_NTASKS  Threads/task: $OMP_NUM_THREADS"
+echo "============================================"
+
+if [ ! -f "$SLURM_SUBMIT_DIR/build/nBody" ]; then
     echo "Compiling..."
-    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-    cmake --build build -j4
+    cmake -S "$SLURM_SUBMIT_DIR" -B "$SLURM_SUBMIT_DIR/build" -DCMAKE_BUILD_TYPE=Release
+    cmake --build "$SLURM_SUBMIT_DIR/build" -j4
 fi
 
+echo ""
 echo "--- Generating reference (np=9, N=100, 100 iter, fixed init) ---"
-mpiexec -np 9 ./build/nBody 100 100 1 1
+srun --ntasks=9 "$SLURM_SUBMIT_DIR/build/nBody" 100 100 1 1
 
-cp output/particles_100.csv compareFiles/reference/particles_100.csv
+cp "$SLURM_SUBMIT_DIR/output/particles_100.csv" "$SLURM_SUBMIT_DIR/compareFiles/reference/particles_100.csv"
 echo "Reference saved to compareFiles/reference/particles_100.csv"
+echo ""
+echo "Done: $(date)"
