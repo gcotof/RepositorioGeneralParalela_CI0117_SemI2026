@@ -1,3 +1,24 @@
+// ---------------------------------------------------------------------------
+// mpiUtils.cpp
+//
+// MPI infrastructure for the N-body ring algorithm.
+//
+//   registerParticleType() — builds and commits an MPI_Datatype that maps
+//                            exactly to the Particle struct memory layout
+//                            using offsetof(). A static_assert verifies at
+//                            compile time that sizeof(Particle) equals
+//                            10 * sizeof(double), preventing silent
+//                            corruption from unexpected padding.
+//
+//   MpiEnvironment         — RAII wrapper around MPI_Init/MPI_Finalize.
+//                            Guarantees cleanup even on early exits or
+//                            exceptions.
+//
+//   buildRingTopology()    — computes each process's left/right neighbors
+//                            and the number of rotation stages (p-1)/2.
+//                            Aborts if the number of processes is even,
+//                            as the algorithm requires an odd process count.
+// ---------------------------------------------------------------------------
 #include "mpiUtils.hpp"
 
 #include <cstddef>   // offsetof
