@@ -1,0 +1,8 @@
+awk: fatal: cannot open file `BEGIN { printf "%.3f", (e - s) / 1000000000 }' for reading: No existe el fichero o el directorio
+awk: fatal: cannot open file `BEGIN { printf "%.3f", (e - s) / 1000000000 }' for reading: No existe el fichero o el directorio
+awk: fatal: cannot open file `BEGIN { printf "%.3f", (e - s) / 1000000000 }' for reading: No existe el fichero o el directorio
+awk: fatal: cannot open file `BEGIN { printf "%.3f", (e - s) / 1000000000 }' for reading: No existe el fichero o el directorio
+awk: fatal: cannot open file `BEGIN { printf "%.3f", (e - s) / 1000000000 }' for reading: No existe el fichero o el directorio
+awk: fatal: cannot open file `BEGIN { printf "%.3f", (e - s) / 1000000000 }' for reading: No existe el fichero o el directorio
+awk: fatal: cannot open file `BEGIN { printf "%.3f", (e - s) / 1000000000 }' for reading: No existe el fichero o el directorio
+awk: fatal: cannot open file `BEGIN { printf "%.3f", (e - s) / 1000000000 }' for reading: No existe el fichero o el directorio

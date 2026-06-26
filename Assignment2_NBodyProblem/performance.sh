@@ -52,7 +52,7 @@ for NP in 1 3 5 7 9 11 13 15; do
     START=$(date +%s%N)
     srun --ntasks=$NP "$SLURM_SUBMIT_DIR/build/nBody" 200 7000 0 0 > /dev/null 2>&1
     END=$(date +%s%N)
-    ELAPSED=$(echo "scale=3; ($END - $START) / 1000000000" | bc)
+    ELAPSED=$(awk -v s="$START" -v e="$END" 'BEGIN { printf "%.3f", (e - s) / 1000000000 }')
     echo "${ELAPSED}s"
     echo "$NP,$ELAPSED" >> "$RESULTS"
 done
