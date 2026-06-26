@@ -43,21 +43,21 @@ srun --ntasks=15 "$SLURM_SUBMIT_DIR/build/nBody" 200 7000 0 0
 # Requires --ntasks equal to the largest value in the list (15 here).
 # Produces a CSV with time per process count.
 # ---------------------------------------------------------------------------
-# RESULTS="$SLURM_SUBMIT_DIR/logs/speedup_${SLURM_JOB_ID}.csv"
-# echo "np,seconds" > "$RESULTS"
-# echo ""
-# echo "--- Scalability sweep ---"
-# for NP in 1 3 5 7 9 11 13 15; do
-#     echo -n "np=$NP ... "
-#     START=$(date +%s%N)
-#     srun --ntasks=$NP "$SLURM_SUBMIT_DIR/build/nBody" 200 7000 0 0 > /dev/null 2>&1
-#     END=$(date +%s%N)
-#     ELAPSED=$(echo "scale=3; ($END - $START) / 1000000000" | bc)
-#     echo "${ELAPSED}s"
-#     echo "$NP,$ELAPSED" >> "$RESULTS"
-# done
-# echo ""
-# echo "Scalability results saved to: $RESULTS"
+RESULTS="$SLURM_SUBMIT_DIR/logs/speedup_${SLURM_JOB_ID}.csv"
+echo "np,seconds" > "$RESULTS"
+echo ""
+echo "--- Scalability sweep ---"
+for NP in 1 3 5 7 9 11 13 15; do
+    echo -n "np=$NP ... "
+    START=$(date +%s%N)
+    srun --ntasks=$NP "$SLURM_SUBMIT_DIR/build/nBody" 200 7000 0 0 > /dev/null 2>&1
+    END=$(date +%s%N)
+    ELAPSED=$(echo "scale=3; ($END - $START) / 1000000000" | bc)
+    echo "${ELAPSED}s"
+    echo "$NP,$ELAPSED" >> "$RESULTS"
+done
+echo ""
+echo "Scalability results saved to: $RESULTS"
 
 echo ""
 echo "Done: $(date)"
