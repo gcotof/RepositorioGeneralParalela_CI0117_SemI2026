@@ -67,3 +67,63 @@ std::vector<unsigned char> gaussian_blur_cpu(const std::vector<unsigned char>& g
 
     return blur;
 }
+
+
+std::vector<unsigned char> gaussian_blur_gpu(const std::vector<unsigned char>& gray,
+                                              int width, int height, int radius) {
+    int total = width * height;
+    std::vector<unsigned char> blur(total);
+
+    // Flatten the kernel to a 1D array to pass it to the GPU
+    // OpenACC cannot access static 2D arrays outside their scope easily
+    int ksize = (radius == 1) ? 3 : 5;
+    int klen  = ksize * ksize;
+    std::vector<float> kernel(klen);
+
+    if (radius == 1) {
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                kernel[i * 3 + j] = KERNEL_3x3[i][j];
+    } else {
+        for (int i = 0; i < 5; i++)
+            for (int j = 0; j < 5; j++)
+                kernel[i * 5 + j] = KERNEL_5x5[i][j];
+    }
+
+    // Raw pointers for acc directives.
+    const unsigned char* in  = gray.data();
+          unsigned char* out = blur.data();
+    const float*         k   = kernel.data();
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    // Transfer data to GPU, execute kernel, copy result back
+    #pragma acc data copyin(in[0:total], k[0:klen]) copyout(out[0:total])
+    {
+        #pragma acc parallel loop collapse(2) present(in, out, k)
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                float suma = 0.0f;
+
+                for (int ky = -radius; ky <= radius; ky++) {
+                    for (int kx = -radius; kx <= radius; kx++) {
+                        // Border clamp
+                        int yy = (y + ky < 0) ? 0 : (y + ky >= height ? height - 1 : y + ky);
+                        int xx = (x + kx < 0) ? 0 : (x + kx >= width  ? width  - 1 : x + kx);
+
+                        float peso = k[(ky + radius) * ksize + (kx + radius)];
+                        suma += peso * (float)in[yy * width + xx];
+                    }
+                }
+
+                out[y * width + x] = (unsigned char)suma;
+            }
+        }
+    } // <- The automatic copyout happens here.
+
+    auto end = std::chrono::high_resolution_clock::now();
+    double ms = std::chrono::duration<double, std::milli>(end - start).count();
+    std::cout << "[GPU] Tiempo blur: " << ms << " ms\n";
+
+    return blur;
+}

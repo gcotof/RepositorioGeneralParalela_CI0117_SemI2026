@@ -7,3 +7,6 @@
 std::vector<unsigned char> to_grayscale(const unsigned char* data, int width, int height, int channels);
 
 std::vector<unsigned char> gaussian_blur_cpu(const std::vector<unsigned char>& gray, int width, int height, int radius = 1);
+
+// GPU version with OpenACC — works with raw pointers internally
+std::vector<unsigned char> gaussian_blur_gpu(const std::vector<unsigned char>& gray, int width, int height, int radius = 1);
