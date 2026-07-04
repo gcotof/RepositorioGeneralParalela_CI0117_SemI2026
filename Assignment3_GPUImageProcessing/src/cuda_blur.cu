@@ -17,7 +17,7 @@ static const float KERNEL_5x5[5][5] = {
     {1/256.f, 4/256.f, 6/256.f, 4/256.f, 1/256.f}
 };
 
-_global_ void blur_kernel(const unsigned char* in, unsigned char* out, const float* k, int width, int height, int radius, int ksize) {
+__global__ void blur_kernel(const unsigned char* in, unsigned char* out, const float* k, int width, int height, int radius, int ksize) {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     if (x >= width || y >= height) return;
