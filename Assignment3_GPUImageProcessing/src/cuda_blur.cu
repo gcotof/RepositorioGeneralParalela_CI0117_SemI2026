@@ -55,12 +55,23 @@ vector<unsigned char> gaussian_blur_cuda(const vector<unsigned char>& gray, int 
     cudaMalloc(&d_in, total * sizeof(unsigned char));
     cudaMalloc(&d_out, total * sizeof(unsigned char));
     cudaMalloc(&d_kernel, klen * sizeof(float));
+    
+    auto start = chrono::high_resolution_clock::now();
+    cudaMemcpy(d_in, gray.data(),total * sizeof(unsigned char), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_kernel, kernel.data(), klen * sizeof(float), cudaMemcpyHostToDevice);
 
     dim3 blockDim(16, 16);
     dim3 gridDim((width  + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);
     blur_kernel<<<gridDim, blockDim>>>(d_in, d_out, d_kernel, width, height, radius, ksize);
     cudaDeviceSynchronize();
     cudaMemcpy(blur.data(), d_out, total * sizeof(unsigned char), cudaMemcpyDeviceToHost);
+
+    auto end = chrono::high_resolution_clock::now();
+    double ms = chrono::duration<double,milli>(end - start).count();
+    cout << "[CUDA] Tiempo blur: " << ms << " ms" << endl;
+    cudaFree(d_in);
+    cudaFree(d_out);
+    cudaFree(d_kernel);
 
     return blur;
 }
