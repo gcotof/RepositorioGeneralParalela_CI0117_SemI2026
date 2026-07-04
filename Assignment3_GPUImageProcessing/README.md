@@ -82,8 +82,10 @@ Supported input formats: `.jpg`, `.jpeg`, `.png`, `.bmp`
 | File | Description |
 |---|---|
 | `output/gray.png` | Grayscale image |
-| `output/blur_cpu.png` | Gaussian blur applied on the CPU |
-| `output/blur_gpu.png` | Gaussian blur applied on the GPU (OpenACC) |
+| `output/blur_cpu_3x3.png` | Gaussian blur applied on the CPU (3x3 kernel) |
+| `output/blur_gpu_5x5.png` | Gaussian blur applied on the GPU (5x5 kernel) |
+| `output/blur_gpu.png` | Gaussian blur applied on the GPU (OpenACC, 3x3 kernel) |
+
 
 ---
 
@@ -105,10 +107,11 @@ The actual execution times on Kabré (Nukwa node) are documented in the PDF repo
 
 ## Filter Parameters
 
-The default kernel is **3×3** (radius 1). To use a **5×5** kernel (radius 2), modify the call in `main.cpp`:
+By default, the program runs the CPU blur with **both** a 3×3 kernel (radius 1) and a 5×5 kernel (radius 2), saving each result separately (`blur_cpu_3x3.png` and `blur_cpu_5x5.png`).
+
+The GPU (OpenACC) blur only runs with the **3×3** kernel by default. To use a 5×5 kernel on the GPU instead, modify the call in `main.cpp`:
 
 ```cpp
 // Change radius=1 to radius=2
-auto blur_cpu = gaussian_blur_cpu(gray, img.width, img.height, 2);
 auto blur_gpu = gaussian_blur_gpu(gray, img.width, img.height, 2);
 ```
