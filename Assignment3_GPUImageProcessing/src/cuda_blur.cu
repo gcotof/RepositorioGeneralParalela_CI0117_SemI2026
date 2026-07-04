@@ -56,5 +56,11 @@ vector<unsigned char> gaussian_blur_cuda(const vector<unsigned char>& gray, int 
     cudaMalloc(&d_out, total * sizeof(unsigned char));
     cudaMalloc(&d_kernel, klen * sizeof(float));
 
+    dim3 blockDim(16, 16);
+    dim3 gridDim((width  + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);
+    blur_kernel<<<gridDim, blockDim>>>(d_in, d_out, d_kernel, width, height, radius, ksize);
+    cudaDeviceSynchronize();
+    cudaMemcpy(blur.data(), d_out, total * sizeof(unsigned char), cudaMemcpyDeviceToHost);
+
     return blur;
 }
