@@ -1,5 +1,7 @@
 #include "processing.hpp"
 #include <iostream>
+#include <chrono>   
+#include <algorithm> 
 
 std::vector<unsigned char> to_grayscale(const unsigned char* data, int width, int height, int channels) {
     int total = width * height;
