@@ -32,3 +32,46 @@ _global_ void blur_kernel(const unsigned char* in, unsigned char* out, const flo
     }
     out[y * width + x] = (unsigned char)suma;
 }
+
+vector<unsigned char> gaussian_blur_cuda(const vector<unsigned char>& gray, int width, int height, int radius) {
+    int total = width * height;
+    vector<unsigned char> blur(total);
+    int ksize = (radius == 1) ? 3 : 5;
+    int klen = ksize * ksize;
+    vector<float> kernel(klen);
+    if (radius == 1) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++)
+                kernel[i * 3 + j] = KERNEL_3x3[i][j];
+        }
+    } else {
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++)
+                kernel[i * 5 + j] = KERNEL_5x5[i][j];
+        }
+    }
+    unsigned char *d_in, *d_out;
+    float *d_kernel;
+    cudaMalloc(&d_in, total * sizeof(unsigned char));
+    cudaMalloc(&d_out, total * sizeof(unsigned char));
+    cudaMalloc(&d_kernel, klen * sizeof(float));
+    
+    auto start = chrono::high_resolution_clock::now();
+    cudaMemcpy(d_in, gray.data(),total * sizeof(unsigned char), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_kernel, kernel.data(), klen * sizeof(float), cudaMemcpyHostToDevice);
+
+    dim3 blockDim(16, 16);
+    dim3 gridDim((width  + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);
+    blur_kernel<<<gridDim, blockDim>>>(d_in, d_out, d_kernel, width, height, radius, ksize);
+    cudaDeviceSynchronize();
+    cudaMemcpy(blur.data(), d_out, total * sizeof(unsigned char), cudaMemcpyDeviceToHost);
+
+    auto end = chrono::high_resolution_clock::now();
+    double ms = chrono::duration<double,milli>(end - start).count();
+    cout << "[CUDA] Tiempo blur: " << ms << " ms" << endl;
+    cudaFree(d_in);
+    cudaFree(d_out);
+    cudaFree(d_kernel);
+
+    return blur;
+}
