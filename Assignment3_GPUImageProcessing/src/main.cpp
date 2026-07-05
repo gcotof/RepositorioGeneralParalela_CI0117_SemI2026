@@ -1,7 +1,7 @@
 #include "image_io.hpp"
 #include "processing.hpp"
 #include <iostream>
-#include <chrono>  // Asegúrate de incluir esto
+#include <chrono>  
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {

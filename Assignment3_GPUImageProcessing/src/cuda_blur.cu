@@ -4,6 +4,22 @@
 #include <cuda_runtime.h>
 using namespace std;
 
+// ---------------------------------------------------------------------------
+// cuda_blur.cu
+//
+// Gaussian Blur GPU kernel using explicit CUDA (no OpenACC).
+//
+// blur_kernel()        — one thread per output pixel. Same convolution and
+//                        clamp border handling as the CPU/OpenACC versions.
+//
+// gaussian_blur_cuda() — host-side driver: allocates device memory, copies
+//                        input/kernel to device, launches blur_kernel, copies
+//                        result back. Explicit memory management (no unified
+//                        memory) with a single round-trip transfer.
+// ---------------------------------------------------------------------------
+
+// CUDA error-checking macro: prints the real driver message on failure
+// instead of continuing silently with undefined device state.
 #define CUDA_CHECK(call) \
     do { \
         cudaError_t err = (call); \
@@ -11,12 +27,13 @@ using namespace std;
             std::cerr << "Error CUDA en " << __FILE__ << ":" << __LINE__ << " -> " << cudaGetErrorString(err) << std::endl; \
     } while (0)
 
+// Normalized 3x3 Gaussian kernel (radius 1)
 static const float KERNEL_3x3[3][3] = {
     {1/16.f, 2/16.f, 1/16.f},
     {2/16.f, 4/16.f, 2/16.f},
     {1/16.f, 2/16.f, 1/16.f}
 };
-
+// Normalized 5x5 Gaussian kernel (radius 2)
 static const float KERNEL_5x5[5][5] = {
     {1/256.f, 4/256.f,  6/256.f, 4/256.f, 1/256.f},
     {4/256.f, 16/256.f, 24/256.f, 16/256.f, 4/256.f},
@@ -24,7 +41,10 @@ static const float KERNEL_5x5[5][5] = {
     {4/256.f, 16/256.f, 24/256.f, 16/256.f, 4/256.f},
     {1/256.f, 4/256.f, 6/256.f, 4/256.f, 1/256.f}
 };
-
+// ---------------------------------------------------------------------------
+// blur_kernel: one thread computes one output pixel (in, out same layout
+// as the CPU version). Border handling via clamp (same as CPU/OpenACC).
+// ---------------------------------------------------------------------------
 __global__ void blur_kernel(const unsigned char* in, unsigned char* out, const float* k, int width, int height, int radius, int ksize) {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -40,7 +60,10 @@ __global__ void blur_kernel(const unsigned char* in, unsigned char* out, const f
     }
     out[y * width + x] = (unsigned char)suma;
 }
-
+// ---------------------------------------------------------------------------
+// gaussian_blur_cuda: host driver. Explicit device memory (no cudaMallocManaged),
+// single host->device transfer, one kernel launch, single device->host transfer.
+// ---------------------------------------------------------------------------
 vector<unsigned char> gaussian_blur_cuda(const vector<unsigned char>& gray, int width, int height, int radius) {
     int total = width * height;
     vector<unsigned char> blur(total);
