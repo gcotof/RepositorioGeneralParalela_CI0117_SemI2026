@@ -4,7 +4,7 @@ CXXFLAGS = -O2 -Iinclude -std=c++17
 
 # Compilador OpenACC (fase 5, usar en Kabré)
 ACCCXX      = nvc++
-ACCCXXFLAGS = -O2 -Iinclude -std=c++17 -acc -Minfo=accel -gpu=cc70
+ACCCXXFLAGS = -O2 -Iinclude -std=c++17 -acc -Minfo=accel -gpu=cc89
 
 SRC = src/stb_impl.cpp src/image_io.cpp src/processing.cpp src/main.cpp
 BIN = gaussian_blur
@@ -24,7 +24,7 @@ clean:
 
 # Build con CUDA
 NVCC      = nvcc
-NVCCFLAGS = -O2 -Iinclude -std=c++17 -arch=sm_70
+NVCCFLAGS = -O2 -Iinclude -std=c++17 -arch=sm_89s
 
 cuda: src/stb_impl.cpp src/image_io.cpp src/processing.cpp src/cuda_blur.cu src/main_cuda.cpp
 	$(NVCC) $(NVCCFLAGS) -o gaussian_blur_cuda $^
