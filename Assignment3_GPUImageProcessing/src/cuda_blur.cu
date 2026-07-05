@@ -2,12 +2,13 @@
 #include <iostream>
 #include <chrono>
 #include <cuda_runtime.h>
+using namespace std;
 
-#define CUDA_CHECK(call)                                                     
-    do {                                                                     
-        cudaError_t err = (call);                                           
-        if (err != cudaSuccess)                                           
-            cerr << "Error CUDA en " << __FILE__ << ":" << __LINE__  << " -> " << cudaGetErrorString(err) << endl;                                                                     
+#define CUDA_CHECK(call) \
+    do { \
+        cudaError_t err = (call); \
+        if (err != cudaSuccess) \
+            std::cerr << "Error CUDA en " << __FILE__ << ":" << __LINE__ << " -> " << cudaGetErrorString(err) << std::endl; \
     } while (0)
 
 static const float KERNEL_3x3[3][3] = {
@@ -59,13 +60,13 @@ vector<unsigned char> gaussian_blur_cuda(const vector<unsigned char>& gray, int 
     }
     unsigned char *d_in, *d_out;
     float *d_kernel;
-    cudaMalloc(&d_in, total * sizeof(unsigned char));
-    cudaMalloc(&d_out, total * sizeof(unsigned char));
-    cudaMalloc(&d_kernel, klen * sizeof(float));
+    CUDA_CHECK(cudaMalloc(&d_in, total * sizeof(unsigned char)));
+    CUDA_CHECK(cudaMalloc(&d_out, total * sizeof(unsigned char)));
+    CUDA_CHECK(cudaMalloc(&d_kernel, klen * sizeof(float)));
     
     auto start = chrono::high_resolution_clock::now();
-    cudaMemcpy(d_in, gray.data(),total * sizeof(unsigned char), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_kernel, kernel.data(), klen * sizeof(float), cudaMemcpyHostToDevice);
+    CUDA_CHECK(cudaMemcpy(d_in, gray.data(), total * sizeof(unsigned char), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_kernel, kernel.data(), klen * sizeof(float), cudaMemcpyHostToDevice));
 
     dim3 blockDim(16, 16);
     dim3 gridDim((width  + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);
@@ -78,7 +79,7 @@ vector<unsigned char> gaussian_blur_cuda(const vector<unsigned char>& gray, int 
     auto end = chrono::high_resolution_clock::now();
     double ms = chrono::duration<double,milli>(end - start).count();
     cout << "[CUDA] Tiempo blur: " << ms << " ms" << endl;
-    cudaFree(d_in);s
+    cudaFree(d_in);
     cudaFree(d_out);
     cudaFree(d_kernel);
 
