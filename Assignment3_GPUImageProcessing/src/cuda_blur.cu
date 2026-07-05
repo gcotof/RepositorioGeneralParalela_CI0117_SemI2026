@@ -3,6 +3,13 @@
 #include <chrono>
 #include <cuda_runtime.h>
 
+#define CUDA_CHECK(call)                                                     
+    do {                                                                     
+        cudaError_t err = (call);                                           
+        if (err != cudaSuccess)                                           
+            cerr << "Error CUDA en " << __FILE__ << ":" << __LINE__  << " -> " << cudaGetErrorString(err) << endl;                                                                     
+    } while (0)
+
 static const float KERNEL_3x3[3][3] = {
     {1/16.f, 2/16.f, 1/16.f},
     {2/16.f, 4/16.f, 2/16.f},
@@ -63,13 +70,15 @@ vector<unsigned char> gaussian_blur_cuda(const vector<unsigned char>& gray, int 
     dim3 blockDim(16, 16);
     dim3 gridDim((width  + blockDim.x - 1) / blockDim.x, (height + blockDim.y - 1) / blockDim.y);
     blur_kernel<<<gridDim, blockDim>>>(d_in, d_out, d_kernel, width, height, radius, ksize);
-    cudaDeviceSynchronize();
-    cudaMemcpy(blur.data(), d_out, total * sizeof(unsigned char), cudaMemcpyDeviceToHost);
+    CUDA_CHECK(cudaGetLastError()); // error de LANZAMIENTO del kernel
+    CUDA_CHECK(cudaDeviceSynchronize()); // error de EJECUCION del kernel
+
+    CUDA_CHECK(cudaMemcpy(blur.data(), d_out, total * sizeof(unsigned char), cudaMemcpyDeviceToHost));
 
     auto end = chrono::high_resolution_clock::now();
     double ms = chrono::duration<double,milli>(end - start).count();
     cout << "[CUDA] Tiempo blur: " << ms << " ms" << endl;
-    cudaFree(d_in);
+    cudaFree(d_in);s
     cudaFree(d_out);
     cudaFree(d_kernel);
 
