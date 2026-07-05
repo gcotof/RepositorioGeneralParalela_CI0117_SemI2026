@@ -24,7 +24,7 @@ clean:
 
 # Build con CUDA
 NVCC      = nvcc
-NVCCFLAGS = -O2 -Iinclude -std=c++17
+NVCCFLAGS = -O2 -Iinclude -std=c++17 -arch=sm_70
 
 cuda: src/stb_impl.cpp src/image_io.cpp src/processing.cpp src/cuda_blur.cu src/main_cuda.cpp
 	$(NVCC) $(NVCCFLAGS) -o gaussian_blur_cuda $^
